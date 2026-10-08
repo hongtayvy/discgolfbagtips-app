@@ -812,3 +812,13 @@ ul { margin: 0; padding: 0; list-style: none; }
   .disc-search__result { grid-template-columns: 1fr auto; }
   .disc-search__result-stability { display: none; }
 }
+
+/* ------------------------------------------------------------------ auth */
+.auth { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.auth__who { color: var(--text-dim); font-size: 0.85rem; }
+.auth__form input {
+  background: var(--bg-sunken); color: var(--text); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 7px 10px; font: inherit; min-width: 0; width: 170px;
+}
+.auth__message { flex-basis: 100%; margin: 0; color: var(--text-dim); font-size: 0.85rem; }
+.app__header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }

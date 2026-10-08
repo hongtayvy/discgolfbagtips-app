@@ -13,6 +13,7 @@ import type {
   WeatherReport,
 } from './types';
 import { WEATHERS } from './types';
+import { getAccessToken, supabase } from '../lib/supabase';
 
 /**
  * Empty by default: requests go to the same origin and Vite proxies /api to the
@@ -34,18 +35,29 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
+  const token = await getAccessToken();
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       ...init,
       // Carries the session cookie the API sets.
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
     });
   } catch {
     throw new ApiError('Could not reach the bag analysis service. Is the API running on port 8080?');
   }
 
   if (!res.ok) {
+    // A token the API rejects must not keep being sent: retrying anonymously would
+    // quietly save the next bag to the session instead of the account.
+    if (res.status === 401 && token) {
+      await supabase?.auth.signOut();
+      throw new ApiError('Your sign-in expired. Please sign in again.', 401);
+    }
     let message = `Request failed (${res.status}).`;
     try {
       const problem = (await res.json()) as ProblemDetail;
@@ -219,4 +231,17 @@ export function getLineup(
     body: JSON.stringify(body),
     signal,
   });
+}
+
+/* ---------------------------------------------------------------- account */
+
+export interface ClaimResult {
+  moved: number;
+  renamed: number;
+  leftBehind: number;
+}
+
+/** Moves bags saved while anonymous onto the signed-in account. Safe to repeat. */
+export function claimSession(): Promise<ClaimResult> {
+  return request<ClaimResult>('/api/v1/account/claim-session', { method: 'POST' });
 }
