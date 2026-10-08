@@ -24,6 +24,7 @@ import { RecommendationCard } from './components/RecommendationCard';
 import { FilterBar } from './components/FilterBar';
 import { BagPicker } from './components/BagPicker';
 import { ProfileBar } from './components/ProfileBar';
+import { AuthBar } from './components/AuthBar';
 
 const DEFAULT_PROFILE: PlayerProfile = {
   skillLevel: 'INTERMEDIATE',
@@ -66,6 +67,7 @@ export default function App() {
   const [profile, setProfile] = useSessionState<PlayerProfile>('profile', DEFAULT_PROFILE, parseProfile);
 
   /** Which already-analysed environment is on screen. Not an analysis input. */
+  const [authEpoch, setAuthEpoch] = useState(0);
   const [weather, setWeather] = useState<Weather>('NORMAL');
 
   /** Catalog id of the bag being carried; the server prices the load from it. */
@@ -288,6 +290,7 @@ export default function App() {
             <p>Find the one disc your bag is missing.</p>
           </div>
         </div>
+        <AuthBar onChange={() => setAuthEpoch((n) => n + 1)} />
       </header>
 
       <main className="app__main">
@@ -341,6 +344,7 @@ export default function App() {
           )}
 
           <ProfileBar
+            refreshKey={authEpoch}
             buildRequest={() => (bag.length ? buildRequest(weather) : null)}
             onLoad={(request, saved) => void loadProfileRequest(request, saved)}
             disabled={!bag.length}

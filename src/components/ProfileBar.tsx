@@ -19,11 +19,14 @@ export function ProfileBar({
   buildRequest,
   onLoad,
   disabled,
+  refreshKey,
 }: {
   /** The current bag as a request body, or null when there is nothing to save. */
   buildRequest: () => RecommendationRequest | null;
   onLoad: (request: RecommendationRequest, profile: BagProfileSummary) => void;
   disabled?: boolean;
+  /** Changes when the signed-in user does, so the list is refetched. */
+  refreshKey?: number;
 }) {
   const [profiles, setProfiles] = useState<BagProfileSummary[]>([]);
   const [name, setName] = useState('');
@@ -40,7 +43,7 @@ export function ProfileBar({
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     if (!status) return;
@@ -156,8 +159,8 @@ export function ProfileBar({
       )}
 
       <p className="profiles__caveat">
-        Saved bags live with this browser's session on the server — there is no sign-in yet, so they will
-        not appear on another device. Use <strong>Export bag</strong> to move one.
+        Signed out, saved bags live with this browser's session and will not appear on another device.
+        Sign in to keep them on your account, or use <strong>Export bag</strong> to move one.
       </p>
     </div>
   );

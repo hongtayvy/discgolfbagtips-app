@@ -10,6 +10,9 @@ npm install
 npm run dev
 ```
 
+Sign-in (optional): set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` and the header shows a sign-in form;
+bags saved while anonymous are claimed onto the account on sign-in. Unset, the app is anonymous-only.
+
 Scripts: `dev`, `build` (typecheck + bundle), `test` (node's built-in runner),
 `lint` (oxlint), `preview`.
 
