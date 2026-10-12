@@ -16,7 +16,8 @@ import type { FlightContext } from './lib/flight';
 import { downloadBag, parseBagFile } from './lib/bagFile';
 import { DiscSearch } from './components/DiscSearch';
 import { DiscCard } from './components/DiscCard';
-import { ProfilePicker } from './components/ProfilePicker';
+import { ProfilePicker, type SkillInput } from './components/ProfilePicker';
+import { InfoTip } from './components/InfoTip';
 import { WeatherToggle } from './components/WeatherToggle';
 import { StabilitySpeedMap } from './components/StabilitySpeedMap';
 import { Lineup } from './components/Lineup';
@@ -85,6 +86,18 @@ export default function App() {
   const [lineup, setLineup] = useState<Partial<Record<Weather, BagLineupResponse>>>({});
   const [lineupLoading, setLineupLoading] = useState(false);
   const [filters, setFilters] = useSessionState<RecommendationFilters>('filters', {});
+  /** Whether skill is entered as a level or as a PDGA rating, and the rating as typed. */
+  const [skillInput, setSkillInput] = useSessionState<SkillInput>(
+    'skillInput',
+    { mode: 'level', rating: '' },
+    (raw) => {
+      if (typeof raw !== 'object' || raw === null) return null;
+      const r = raw as Record<string, unknown>;
+      return (r.mode === 'level' || r.mode === 'pdga') && typeof r.rating === 'string' && r.rating.length <= 4
+        ? { mode: r.mode, rating: r.rating }
+        : null;
+    },
+  );
   /** Suggest from the brands already in the bag. On by default; the player can opt out. */
   const [matchBag, setMatchBag] = useSessionState<boolean>('matchBagBrands', true, (raw) =>
     typeof raw === 'boolean' ? raw : null,
@@ -358,13 +371,36 @@ export default function App() {
                   if (file) void importBag(file);
                 }}
               />
-              <button
-                type="button"
-                className="button button--ghost"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Import bag
-              </button>
+              <span className="import-group">
+                <button
+                  type="button"
+                  className="button button--ghost"
+                  title="Load a bag you saved earlier with Export bag"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Import bag
+                </button>
+                <InfoTip label="How importing a bag works" title="Importing a bag">
+                  <p>
+                    <strong>Import bag</strong> loads a bag you saved earlier with <strong>Export bag</strong>.
+                  </p>
+                  <ol>
+                    <li>
+                      Build a bag, then click <strong>Export bag</strong>. It downloads a small{' '}
+                      <code>.json</code> file. The button appears once you've added a disc.
+                    </li>
+                    <li>
+                      Whenever you like, click <strong>Import bag</strong> and choose that file.
+                    </li>
+                  </ol>
+                  <p>
+                    It brings back your discs (with plastic, weight and wear), your player profile and your
+                    bag. It <em>replaces</em> the bag you're building now. Brand picks and the weather
+                    aren't saved.
+                  </p>
+                  <p className="infotip__note">Only files exported from this app will load.</p>
+                </InfoTip>
+              </span>
               {bag.length > 0 && (
                 <>
                   <button type="button" className="button button--ghost" onClick={exportBag}>
@@ -440,7 +476,12 @@ export default function App() {
         )}
 
         <Section step={bag.length ? 3 : 2} title="Your game" hint="Three answers. They change how each disc's line is modelled.">
-          <ProfilePicker profile={profile} onChange={setProfile} />
+          <ProfilePicker
+            profile={profile}
+            onChange={setProfile}
+            skillInput={skillInput}
+            onSkillInputChange={setSkillInput}
+          />
         </Section>
 
         {bag.length > 0 && (
