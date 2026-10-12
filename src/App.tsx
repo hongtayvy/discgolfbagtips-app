@@ -25,6 +25,7 @@ import { FilterBar } from './components/FilterBar';
 import { BagPicker } from './components/BagPicker';
 import { ProfileBar } from './components/ProfileBar';
 import { AuthBar } from './components/AuthBar';
+import { ThemeToggle } from './components/ThemeToggle';
 import { PrimaryLogo } from './components/Logo';
 
 const DEFAULT_PROFILE: PlayerProfile = {
@@ -287,7 +288,10 @@ export default function App() {
         <h1 className="app__brand">
           <PrimaryLogo height={40} />
         </h1>
-        <AuthBar onChange={() => setAuthEpoch((n) => n + 1)} />
+        <div className="app__actions">
+          <ThemeToggle />
+          <AuthBar onChange={() => setAuthEpoch((n) => n + 1)} />
+        </div>
       </header>
 
       <main className="app__main">

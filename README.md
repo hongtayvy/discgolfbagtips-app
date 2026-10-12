@@ -86,7 +86,13 @@ The UI follows the Disc Golf Bag Tips brand identity, v1.0. The palette is in `s
 as tokens: Forest, Sage, Cream, Charcoal and Lime. Headings use Plus Jakarta Sans
 and body text uses Inter. **Lime and Sage are fill colours only.** As text on
 Cream they measure 1.16:1 and 2.43:1 against a 4.5:1 minimum, so highlight text
-uses an olive derived from Lime instead. Logos are the official artwork from the logo kit, cropped (never redrawn) from
+uses an olive derived from Lime instead. **Theme.** Cream is the default. Dark mode is an explicit header toggle, stored
+per browser (`src/lib/theme.ts`) and applied to `<html data-theme>` by an inline
+script before first paint. It deliberately does not follow the device's
+`prefers-color-scheme`: the kit only defines the light look, and a site that
+turns dark on its own reads as a bug.
+
+Logos are the official artwork from the logo kit, cropped (never redrawn) from
 the originals in `brand/source/`. See `brand/README.md`.
 
 Sign-in is a native `<dialog>` (`AuthDialog`). The browser supplies the focus
