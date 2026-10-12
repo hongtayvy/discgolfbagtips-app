@@ -1,30 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { claimSession } from '../api/client';
 import { supabase } from '../lib/supabase';
+import { FIRST_STEP, type AuthStep } from '../lib/authConfig';
+import { initialsFor } from '../lib/initials';
+import { AuthDialog } from './AuthDialog';
 
 /**
- * Sign-in for saved bags. Renders nothing when Supabase is not configured.
- * Passwords go straight to Supabase; the API only ever sees the access token.
+ * Header account control. Renders nothing when Supabase is not configured.
+ * Passwords and OAuth go straight to Supabase; the API only sees the token.
+ *
+ * Signed out: one "Sign in" button that opens AuthDialog over the page. The
+ * header never changes size, which is what the old inline form got wrong.
+ * Signed in: an initials avatar with a small menu, as in the brand kit.
  *
  * `onChange` fires after sign-in (with any anonymous bags already claimed) and
  * after sign-out, so lists backed by /profiles can refetch.
  */
 export function AuthBar({ onChange }: { onChange: () => void }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<'in' | 'up'>('in');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ open: boolean; step: AuthStep; key: number }>({
+    open: false,
+    step: FIRST_STEP,
+    key: 0,
+  });
+
+  const openDialog = (step: AuthStep = FIRST_STEP) =>
+    setDialog((d) => ({ open: true, step, key: d.key + 1 }));
+  const closeDialog = () => setDialog((d) => ({ ...d, open: false }));
 
   useEffect(() => {
     if (!supabase) return;
     void supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
-      if (event === 'SIGNED_IN') {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Arrived from a reset email: ask for the new password straight away.
+        openDialog('reset');
+      } else if (event === 'SIGNED_IN') {
         // Deferred: supabase-js holds a lock during this callback, and the API
         // calls below ask it for the token.
         setTimeout(() => {
@@ -42,80 +55,75 @@ export function AuthBar({ onChange }: { onChange: () => void }) {
 
   if (!supabase) return null;
 
-  if (session) {
-    return (
-      <div className="auth">
-        <span className="auth__who">{session.user.email ?? 'Signed in'}</span>
-        <button type="button" className="button button--ghost" onClick={() => void supabase!.auth.signOut()}>
-          Sign out
-        </button>
-      </div>
-    );
-  }
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setMessage(null);
-    const creds = { email: email.trim(), password };
-    const { data, error } =
-      mode === 'in'
-        ? await supabase!.auth.signInWithPassword(creds)
-        : await supabase!.auth.signUp({ ...creds, options: { emailRedirectTo: window.location.origin } });
-    setBusy(false);
-    if (error) setMessage(error.message);
-    else if (!data.session) setMessage('Check your email to confirm the account, then sign in.');
-    else {
-      setOpen(false);
-      setPassword('');
-    }
-  };
-
-  if (!open) {
-    return (
-      <div className="auth">
-        <button type="button" className="button button--ghost" onClick={() => setOpen(true)}>
+  return (
+    <div className="auth">
+      {session ? (
+        <AccountMenu email={session.user.email ?? ''} onSignOut={() => void supabase!.auth.signOut()} />
+      ) : (
+        <button type="button" className="button button--primary" onClick={() => openDialog()}>
           Sign in
         </button>
-      </div>
-    );
-  }
+      )}
+      <AuthDialog
+        key={dialog.key}
+        open={dialog.open}
+        step={dialog.step}
+        onStep={(step) => setDialog((d) => ({ ...d, step }))}
+        onClose={closeDialog}
+      />
+    </div>
+  );
+}
+
+function AccountMenu({ email, onSignOut }: { email: string; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <form className="auth auth__form" onSubmit={(e) => void submit(e)}>
-      <input
-        type="email"
-        required
-        autoComplete="email"
-        placeholder="Email"
-        aria-label="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        required
-        minLength={6}
-        autoComplete={mode === 'in' ? 'current-password' : 'new-password'}
-        placeholder="Password"
-        aria-label="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button type="submit" className="button" disabled={busy}>
-        {mode === 'in' ? 'Sign in' : 'Create account'}
-      </button>
+    <div className="account" ref={root}>
       <button
         type="button"
-        className="button button--ghost"
-        onClick={() => setMode(mode === 'in' ? 'up' : 'in')}
+        className="account__avatar"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Account: ${email}`}
+        onClick={() => setOpen((v) => !v)}
       >
-        {mode === 'in' ? 'New here?' : 'Have an account?'}
+        {initialsFor(email)}
       </button>
-      <button type="button" className="button button--ghost" onClick={() => setOpen(false)} aria-label="Cancel">
-        ×
-      </button>
-      {message && <p className="auth__message" role="status">{message}</p>}
-    </form>
+      {open && (
+        <div className="account__menu" role="menu">
+          <p className="account__email">{email}</p>
+          <button
+            type="button"
+            role="menuitem"
+            className="account__item"
+            autoFocus
+            onClick={() => {
+              setOpen(false);
+              onSignOut();
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

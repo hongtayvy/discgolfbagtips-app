@@ -25,6 +25,7 @@ import { FilterBar } from './components/FilterBar';
 import { BagPicker } from './components/BagPicker';
 import { ProfileBar } from './components/ProfileBar';
 import { AuthBar } from './components/AuthBar';
+import { PrimaryLogo } from './components/Logo';
 
 const DEFAULT_PROFILE: PlayerProfile = {
   skillLevel: 'INTERMEDIATE',
@@ -283,13 +284,9 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <div className="app__brand">
-          <span className="app__mark" aria-hidden="true" />
-          <div>
-            <h1>Bag Tips</h1>
-            <p>Find the one disc your bag is missing.</p>
-          </div>
-        </div>
+        <h1 className="app__brand">
+          <PrimaryLogo height={40} />
+        </h1>
         <AuthBar onChange={() => setAuthEpoch((n) => n + 1)} />
       </header>
 
@@ -434,7 +431,7 @@ export default function App() {
           {!report && (
             <button
               type="button"
-              className="button button--primary button--lg"
+              className="button button--cta button--lg"
               disabled={!bag.length || loading}
               onClick={() => void analyze(true)}
             >

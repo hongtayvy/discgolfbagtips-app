@@ -1,46 +1,74 @@
 /* ------------------------------------------------------------------ tokens */
+/*
+ * Disc Golf Bag Tips brand, visual identity v1.0.
+ *
+ *   Forest  #1B3A2E  primary brand colour
+ *   Sage    #8CA68C  supporting UI — fills and decoration only
+ *   Cream   #F8F5ED  background foundation
+ *   Charcoal#1F2937  primary text and interface elements
+ *   Lime    #C7F464  highlights and key actions — fills only
+ *
+ * Lime and Sage are fill colours. As text on Cream they measure 1.16:1 and
+ * 2.43:1, far below the 4.5:1 body-text minimum, so text that needs to read as
+ * "highlight" uses --rec-accent, an olive derived from Lime (5.6:1).
+ */
 :root {
-  --bg: #0e1512;
-  --bg-raised: #141d19;
-  --bg-sunken: #0a100d;
-  --line: #22302a;
-  --line-soft: #1a251f;
-  --text: #e8f0ec;
-  --text-dim: #93a69d;
-  --text-faint: #6b7f76;
+  --forest: #1B3A2E;
+  --sage: #8CA68C;
+  --cream: #F8F5ED;
+  --charcoal: #1F2937;
+  --lime: #C7F464;
 
-  --accent: #4ade80;
-  --accent-deep: #16a34a;
-  --rec-accent: #fbbf24;
+  --bg: var(--cream);
+  --bg-raised: #ffffff;
+  --bg-sunken: #f1ede2;
+  --line: #e2ddd0;
+  --line-soft: #ece8dd;
+  --text: var(--charcoal);
+  --text-dim: #4b5563;
+  --text-faint: #5f6673;
+
+  --accent: var(--forest);
+  --accent-deep: #142c23;
+  --on-accent: var(--cream);
+  --cta: var(--lime);
+  --on-cta: var(--forest);
+  --rec-accent: #4d6b0f;
   --muted-accent: #64748b;
-  --danger: #f87171;
+  --danger: #b42318;
 
   --radius: 14px;
   --radius-sm: 9px;
-  --shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+  --shadow: 0 10px 30px rgb(27 58 46 / 0.10);
+  --shadow-lg: 0 24px 60px rgb(27 58 46 / 0.22);
 
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: light) {
+/* Dark: the same brand, inverted around Forest rather than a generic grey. */
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg: #f4f7f5;
-    --bg-raised: #ffffff;
-    --bg-sunken: #eaefeb;
-    --line: #d7e0da;
-    --line-soft: #e6ece8;
-    --text: #12201a;
-    --text-dim: #5a6b63;
-    --text-faint: #86968d;
-    --accent: #15803d;
-    --accent-deep: #166534;
-    --rec-accent: #b45309;
-    --muted-accent: #64748b;
-    --shadow: 0 10px 26px rgb(15 40 30 / 0.10);
-    color-scheme: light;
+    --bg: #0f1a15;
+    --bg-raised: #15231c;
+    --bg-sunken: #0b140f;
+    --line: #263a30;
+    --line-soft: #1c2c24;
+    --text: var(--cream);
+    --text-dim: #b9c4bc;
+    --text-faint: #8c9c91;
+
+    --accent: #a9c7a3;
+    --accent-deep: #8cb086;
+    --on-accent: var(--forest);
+    --rec-accent: var(--lime);
+    --danger: #f97066;
+    --shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+    --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
+    color-scheme: dark;
   }
 }
 
@@ -54,7 +82,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
 p { margin: 0; }
 ul { margin: 0; padding: 0; list-style: none; }
 
@@ -71,13 +99,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   gap: 16px; flex-wrap: wrap; padding: 32px 0 24px;
 }
 .app__brand { display: flex; align-items: center; gap: 14px; }
-.app__mark {
-  width: 38px; height: 38px; border-radius: 50%;
-  background: radial-gradient(circle at 32% 30%, var(--accent), var(--accent-deep) 70%);
-  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--bg) 70%, transparent);
-}
-.app__header h1 { font-size: 1.35rem; }
-.app__brand p { color: var(--text-dim); font-size: 0.9rem; margin-top: 2px; }
 
 .app__badge {
   font-size: 0.75rem; color: var(--rec-accent); border: 1px dashed color-mix(in srgb, var(--rec-accent) 45%, transparent);
@@ -144,7 +165,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .button--primary {
-  background: var(--accent); border-color: var(--accent); color: #06140c;
+  background: var(--accent); border-color: var(--accent); color: var(--on-accent);
 }
 .button--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 85%, #fff); }
 .button--ghost { background: transparent; color: var(--text-dim); }
@@ -814,11 +835,145 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 /* ------------------------------------------------------------------ auth */
-.auth { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
-.auth__who { color: var(--text-dim); font-size: 0.85rem; }
-.auth__form input {
-  background: var(--bg-sunken); color: var(--text); border: 1px solid var(--line);
-  border-radius: var(--radius-sm); padding: 7px 10px; font: inherit; min-width: 0; width: 170px;
+
+/* ---------------------------------------------------------------- brand */
+.app__header { border-bottom: 1px solid var(--line-soft); margin-bottom: 28px; }
+.app__brand { margin: 0; font-size: inherit; }
+
+/* The official logo images. They are Forest artwork on transparency; on dark
+   backgrounds the kit's single-colour white version is used instead. */
+.brand-logo { display: block; max-width: 100%; height: auto; }
+@media (prefers-color-scheme: dark) {
+  .brand-logo { filter: brightness(0) invert(1); }
 }
-.auth__message { flex-basis: 100%; margin: 0; color: var(--text-dim); font-size: 0.85rem; }
-.app__header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+/* Kit rule: clear space equal to the height of the monogram's "D" — half the
+   logo's height — on every side. The header keeps that much room around it. */
+.app__brand { padding-block: 0; margin-right: 20px; line-height: 0; }
+
+/* CTA: the kit's Lime "key action". Lime is a fill colour only. */
+.button--cta {
+  background: var(--cta); border-color: var(--cta); color: var(--on-cta); font-weight: 700;
+}
+.button--cta:hover:not(:disabled) { background: color-mix(in srgb, var(--cta) 88%, #000); }
+
+/* ----------------------------------------------------------------- auth */
+.auth { display: flex; align-items: center; margin-left: auto; }
+
+.account { position: relative; }
+.account__avatar {
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center;
+  font: 700 0.82rem var(--font); letter-spacing: 0.02em;
+  color: var(--forest);
+  background: color-mix(in srgb, var(--sage) 45%, var(--cream));
+  border: 1px solid color-mix(in srgb, var(--sage) 70%, var(--cream));
+}
+.account__avatar:hover { background: color-mix(in srgb, var(--sage) 60%, var(--cream)); }
+/* Anchored to the avatar, so opening it never moves the header. */
+.account__menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 30;
+  min-width: 220px; padding: 6px;
+  background: var(--bg-raised); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow);
+}
+.account__email {
+  padding: 8px 10px 10px; font-size: 0.8rem; color: var(--text-dim);
+  border-bottom: 1px solid var(--line-soft); margin-bottom: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.account__item {
+  width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px;
+  background: none; color: var(--text); font: 500 0.88rem var(--font); cursor: pointer;
+}
+.account__item:hover, .account__item:focus-visible { background: var(--bg-sunken); }
+
+/* The dialog sits in the top layer; the page behind it never reflows.
+   scrollbar-gutter keeps the scrollbar's space reserved, so locking scroll
+   does not slide the centred layout sideways by half a scrollbar. */
+html { scrollbar-gutter: stable; }
+html:has(dialog[open]) { overflow: hidden; }
+
+.auth-dialog {
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  /* Anchored near the top rather than centred: when an error or the sign-up
+     hint appears, the dialog grows downward instead of jumping vertically. */
+  margin: max(16px, 12vh) auto auto;
+  padding: 0; border: 0; border-radius: 18px;
+  background: var(--bg-raised); color: var(--text);
+  box-shadow: var(--shadow-lg);
+  overflow: auto;
+}
+.auth-dialog::backdrop {
+  background: color-mix(in srgb, var(--forest) 42%, transparent);
+  backdrop-filter: blur(3px);
+}
+.auth-dialog[open] { animation: dialog-in 160ms ease-out; }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(6px) scale(0.99); } }
+
+.auth-dialog__panel { position: relative; padding: 34px 32px 26px; }
+.auth-dialog__close {
+  position: absolute; top: 14px; right: 14px;
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border: 0; border-radius: 8px; background: none; color: var(--text-dim); cursor: pointer;
+}
+.auth-dialog__close:hover { background: var(--bg-sunken); color: var(--text); }
+
+.auth-dialog__head { text-align: center; display: grid; justify-items: center; gap: 8px; margin-bottom: 24px; }
+.auth-dialog__mark { margin-bottom: 8px; }
+.auth-dialog__head h2 { font-size: 1.35rem; font-weight: 700; }
+.auth-dialog__head p { font-size: 0.88rem; line-height: 1.5; color: var(--text-dim); max-width: 32ch; }
+
+.auth-dialog__providers { display: grid; gap: 10px; }
+.provider-button {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 46px; padding: 10px 16px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--bg-raised); color: var(--text);
+  font: 600 0.9rem var(--font); cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.provider-button:hover:not(:disabled) { background: var(--bg-sunken); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.provider-button:disabled { opacity: 0.55; cursor: progress; }
+
+.auth-dialog__form { display: grid; gap: 14px; }
+.auth-field { display: grid; gap: 6px; }
+.auth-field__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.auth-field label { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+.auth-field input {
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--bg); color: var(--text); font: 400 0.95rem var(--font);
+}
+.auth-field input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; border-color: var(--accent); }
+
+.password-input { position: relative; display: block; }
+.password-input input { padding-right: 64px; }
+.password-input__toggle {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  padding: 6px 9px; border: 0; border-radius: 7px; background: none; cursor: pointer;
+  color: var(--text-dim); font: 600 0.78rem var(--font);
+}
+.password-input__toggle:hover { background: var(--bg-sunken); color: var(--text); }
+
+.auth-dialog__hint { margin-top: -8px; font-size: 0.78rem; color: var(--text-faint); }
+/* Always one line tall, so an error appearing never pushes the button. */
+.auth-dialog__error { min-height: 1.35em; margin: -4px 0 -6px; font-size: 0.82rem; color: var(--danger); }
+.auth-dialog__submit { width: 100%; min-height: 46px; font-size: 0.92rem; border-radius: 10px; }
+.auth-dialog__switch { text-align: center; font-size: 0.85rem; color: var(--text-dim); }
+.auth-dialog__back { justify-self: center; }
+.auth-dialog__legal { margin-top: 20px; text-align: center; font-size: 0.75rem; line-height: 1.5; color: var(--text-faint); }
+.auth-dialog__legal a { color: var(--text-dim); }
+
+.link-button {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  font: 600 0.82rem var(--font); color: var(--accent); text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: 3px;
+}
+.link-button:hover { text-decoration-color: currentColor; }
+
+@media (max-width: 520px) {
+  .auth-dialog { margin-top: 16px; }
+  .auth-dialog__panel { padding: 30px 20px 22px; }
+}
