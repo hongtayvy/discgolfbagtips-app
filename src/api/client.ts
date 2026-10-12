@@ -6,6 +6,7 @@ import type {
   BagSummary,
   Disc,
   Plastic,
+  PlayerSettingsWire,
   SaveProfileRequest,
   ProblemDetail,
   RecommendationRequest,
@@ -271,6 +272,23 @@ export interface ClaimResult {
   moved: number;
   renamed: number;
   leftBehind: number;
+}
+
+/** The signed-in player's saved preferences. Needs a bearer token. */
+export function getSettings(): Promise<PlayerSettingsWire> {
+  return request<PlayerSettingsWire>('/api/v1/account/settings');
+}
+
+/**
+ * Changes some preferences. Merge semantics: a field present is set, an
+ * explicit null clears it, an omitted field is untouched. Returns the full
+ * settings, so the caller need not guess what the server now holds.
+ */
+export function patchSettings(patch: Partial<PlayerSettingsWire>): Promise<PlayerSettingsWire> {
+  return request<PlayerSettingsWire>('/api/v1/account/settings', {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
 }
 
 /** Moves bags saved while anonymous onto the signed-in account. Safe to repeat. */
