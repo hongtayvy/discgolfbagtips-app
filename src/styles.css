@@ -1077,7 +1077,31 @@ html:has(dialog[open]) { overflow: hidden; }
 .rating-field__result { margin: 0; font-size: 0.86rem; color: var(--text-dim); }
 .rating-field__result strong { color: var(--text); }
 .rating-field__range { color: var(--text-faint); }
-.skill-input__bands { font-size: 0.72rem; color: var(--text-faint); line-height: 1.5; }
+/* Read-only assessment under the rating: what each band means, current one marked. */
+.skill-scale { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; }
+.skill-scale__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.skill-scale__row[aria-current='true'] {
+  background: var(--bg-sunken);
+  box-shadow: inset 3px 0 0 var(--accent);
+  color: var(--text);
+}
+.skill-scale__name { font-weight: 600; }
+.skill-scale__rating, .skill-scale__hint { font-variant-numeric: tabular-nums; color: var(--text-faint); }
+.skill-scale__row[aria-current='true'] .skill-scale__rating,
+.skill-scale__row[aria-current='true'] .skill-scale__hint { color: var(--text-dim); }
+@media (max-width: 420px) {
+  .skill-scale__row { grid-template-columns: 1fr auto; }
+  .skill-scale__hint { grid-column: 1 / -1; }
+}
 
 /* Where "Your game" is kept: account, or just this browser. */
 .settings-status {
