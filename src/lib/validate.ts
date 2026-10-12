@@ -7,6 +7,7 @@ import type {
   ThrowingStyle,
   Wear,
 } from '../api/types';
+import { withUniqueKeys } from './bagEntries.ts';
 
 /**
  * Shape validation for data that comes from outside the running app: imported
@@ -69,9 +70,11 @@ export function parseDisc(raw: unknown): BagEntry | null {
   const weightGrams = bounded(raw.weightGrams, MIN_DISC_GRAMS, MAX_DISC_GRAMS);
   const wear = oneOf<Wear>(raw.wear, WEARS);
   const imageUrl = text(raw.imageUrl);
+  const entryId = text(raw.entryId);
 
   return {
     id,
+    ...(entryId ? { entryId } : {}),
     name,
     brand,
     slot,
@@ -105,13 +108,8 @@ export function parseBag(raw: unknown): BagEntry[] | null {
   const discs = raw.map(parseDisc);
   if (discs.some((d) => d === null)) return null;
 
-  // Drop duplicates rather than letting one disc appear twice in the bag.
-  const seen = new Set<string>();
-  return (discs as BagEntry[]).filter((d) => {
-    if (seen.has(d.id)) return false;
-    seen.add(d.id);
-    return true;
-  });
+  // Repeated molds are legitimate; they are given distinct keys, not dropped.
+  return withUniqueKeys(discs as BagEntry[]);
 }
 
 /**

@@ -70,10 +70,12 @@ describe('bag file', () => {
     assert.equal(parsed.data.profile.throwingStyle, 'BOTH');
   });
 
-  it('drops duplicate discs', () => {
+  it('keeps repeated molds, each with its own key', () => {
     const parsed = parseBagFile(withOverrides({ bag: [...snapshot.bag, snapshot.bag[0]] }));
     assert.ok(parsed.ok);
-    assert.equal(parsed.data.bag.length, 2);
+    assert.equal(parsed.data.bag.length, 3);
+    assert.equal(parsed.data.bag[2].id, snapshot.bag[0].id);
+    assert.equal(new Set(parsed.data.bag.map((d) => d.entryId ?? d.id)).size, 3);
   });
 
   it('truncates oversized strings and drops unknown fields', () => {

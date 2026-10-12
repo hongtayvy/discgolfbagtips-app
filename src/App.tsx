@@ -11,6 +11,8 @@ import type {
   WeatherReport,
 } from './api/types';
 import { useSessionState } from './lib/session';
+import { countByDisc, entryKey, newEntry, resolvedByEntry, withUniqueKeys } from './lib/bagEntries';
+import { MAX_BAG_SIZE } from './lib/validate';
 import { parseBag, parseBagModelId, parseProfile } from './lib/validate';
 import type { FlightContext } from './lib/flight';
 import { downloadBag, parseBagFile } from './lib/bagFile';
@@ -154,11 +156,16 @@ export default function App() {
 
   const ctx: FlightContext = { profile, weather };
   const result = report?.[weather] ?? null;
+  const resolvedEntries = useMemo(
+    () => resolvedByEntry(bag, result?.analysis.resolvedBag ?? []),
+    [bag, result],
+  );
 
-  const addDisc = (disc: Disc) => setBag((b) => (b.some((d) => d.id === disc.id) ? b : [...b, disc]));
+  /** Always appends: owning two of one mold, at different wear or plastic, is a real bag. */
+  const addDisc = (disc: Disc) => setBag((b) => (b.length >= MAX_BAG_SIZE ? b : [...b, newEntry(disc, b)]));
 
   const updateDisc = (id: string, patch: Partial<BagEntry>) =>
-    setBag((b) => b.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+    setBag((b) => b.map((d) => (entryKey(d) === id ? { ...d, ...patch } : d)));
 
   /**
    * The single shape sent to every endpoint, and stored in a saved profile.
@@ -233,7 +240,7 @@ export default function App() {
         }
       }),
     );
-    const discs = resolved.filter((d): d is BagEntry => d !== null);
+    const discs = withUniqueKeys(resolved.filter((d): d is BagEntry => d !== null));
     setBag(discs);
 
     const missing = request.bag.length - discs.length;
@@ -246,7 +253,7 @@ export default function App() {
   };
 
   const removeDisc = (id: string) => {
-    const next = bag.filter((d) => d.id !== id);
+    const next = bag.filter((d) => entryKey(d) !== id);
     setBag(next);
     if (!next.length) setReport(null);
   };
@@ -359,7 +366,6 @@ export default function App() {
    * catalog record rather than guessing at the fields the map and cards need.
    */
   const addFromRecommendation = async (discId: string) => {
-    if (bag.some((d) => d.id === discId)) return;
     try {
       addDisc(await getDisc(discId));
     } catch (err) {
@@ -450,7 +456,7 @@ export default function App() {
             </div>
           }
         >
-          <DiscSearch selectedIds={bag.map((d) => d.id)} onSelect={addDisc} />
+          <DiscSearch counts={countByDisc(bag)} onSelect={addDisc} />
 
           {transfer && (
             <p
@@ -481,12 +487,12 @@ export default function App() {
               <div className="bag-grid">
                 {bag.map((disc) => (
                   <DiscCard
-                    key={disc.id}
+                    key={entryKey(disc)}
                     disc={disc}
                     ctx={ctx}
-                    resolved={result?.analysis.resolvedBag.find((r) => r.discId === disc.id)}
-                    onRemove={() => removeDisc(disc.id)}
-                    onChange={(patch) => updateDisc(disc.id, patch)}
+                    resolved={resolvedEntries.get(entryKey(disc))}
+                    onRemove={() => removeDisc(entryKey(disc))}
+                    onChange={(patch) => updateDisc(entryKey(disc), patch)}
                   />
                 ))}
               </div>

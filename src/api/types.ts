@@ -83,6 +83,8 @@ export interface BagDiscRequest {
 
 /** A disc in the bag, plus how this player owns it. */
 export interface BagEntry extends Disc {
+  /** Distinguishes repeat copies of one mold; absent on the first copy. See lib/bagEntries. */
+  entryId?: string;
   plastic?: string;
   weightGrams?: number;
   wear?: Wear;
