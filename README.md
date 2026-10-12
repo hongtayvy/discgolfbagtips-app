@@ -125,8 +125,9 @@ Skill can be picked as a level or entered as a PDGA rating (`src/lib/pdga.ts`).
 The API only takes four levels, so a rating is mapped onto them. PDGA publishes
 division ceilings (800, 850, 900, 935, 970, with 970+ its Professional division)
 and not "beginner" or "advanced", so the grouping is this app's judgement:
-under 850 Beginner, 850–899 Intermediate, 900–969 Advanced, 970+ Pro. The cutoffs
-are shown next to the input, and the level buttons stay available as an override.
+under 850 Beginner, 850–899 Intermediate, 900–969 Advanced, 970–999 Local pro, 1000+ Touring pro.
+Both pro tiers send `PROFESSIONAL` (the API has no finer level); the split is for
+display. The cutoffs are shown next to the input, and the level buttons stay available as an override.
 A half-typed or implausible rating never changes the level.
 
 ## Carry weight and bag models

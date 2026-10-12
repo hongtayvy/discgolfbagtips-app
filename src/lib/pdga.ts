@@ -9,21 +9,36 @@ import type { SkillLevel } from '../api/types';
  * 970. That grouping is this app's judgement, not PDGA's: PDGA publishes
  * division ceilings, not "beginner" or "advanced". The UI shows the cutoffs and
  * keeps the level buttons, so a rating is a convenience and never a trap.
+ *
+ * The top level is split for display only: 970–999 reads as a local pro and
+ * 1000+ as a touring pro. Both send PROFESSIONAL, because the API has no finer
+ * level than that.
  */
-export const PDGA_BANDS: { level: SkillLevel; min: number; max: number | null }[] = [
-  { level: 'BEGINNER', min: 0, max: 849 },
-  { level: 'INTERMEDIATE', min: 850, max: 899 },
-  { level: 'ADVANCED', min: 900, max: 969 },
-  { level: 'PROFESSIONAL', min: 970, max: null },
+export interface PdgaTier {
+  name: string;
+  level: SkillLevel;
+  min: number;
+  max: number | null;
+}
+
+export const PDGA_TIERS: PdgaTier[] = [
+  { name: 'Beginner', level: 'BEGINNER', min: 0, max: 849 },
+  { name: 'Intermediate', level: 'INTERMEDIATE', min: 850, max: 899 },
+  { name: 'Advanced', level: 'ADVANCED', min: 900, max: 969 },
+  { name: 'Local pro', level: 'PROFESSIONAL', min: 970, max: 999 },
+  { name: 'Touring pro', level: 'PROFESSIONAL', min: 1000, max: null },
 ];
 
 /** Outside this, a typed number is almost certainly a typo, not a rating. */
 export const MIN_RATING = 200;
 export const MAX_RATING = 1200;
 
+export function tierForRating(rating: number): PdgaTier {
+  return PDGA_TIERS.find((t) => rating >= t.min && (t.max === null || rating <= t.max)) ?? PDGA_TIERS[0];
+}
+
 export function levelForRating(rating: number): SkillLevel {
-  const band = PDGA_BANDS.find((b) => rating >= b.min && (b.max === null || rating <= b.max));
-  return band?.level ?? 'BEGINNER';
+  return tierForRating(rating).level;
 }
 
 /** The rating text as a number, or null when it is not a plausible rating. */
@@ -34,9 +49,7 @@ export function parseRating(text: string): number | null {
   return n >= MIN_RATING && n <= MAX_RATING ? n : null;
 }
 
-export function rangeLabel(level: SkillLevel): string {
-  const band = PDGA_BANDS.find((b) => b.level === level);
-  if (!band) return '';
-  if (band.max === null) return `${band.min}+`;
-  return band.min === 0 ? `under ${band.max + 1}` : `${band.min}–${band.max}`;
+export function rangeLabel(tier: PdgaTier): string {
+  if (tier.max === null) return `${tier.min}+`;
+  return tier.min === 0 ? `under ${tier.max + 1}` : `${tier.min}–${tier.max}`;
 }
