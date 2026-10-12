@@ -3,6 +3,7 @@ import type { BagLineupResponse, SlotGap, SlotLineup, SlotStatus, SuggestedDisc 
 import type { FlightContext } from '../lib/flight';
 import { humanizeStability } from '../lib/flight';
 import { delta, isVectorRetrieval, num } from '../lib/format';
+import { joinNames } from '../lib/brands';
 import { FlightNumbersRow } from './DiscCard';
 import { FlightPath } from './FlightPath';
 import { Redundancies } from './Redundancies';
@@ -31,11 +32,14 @@ export function Lineup({
   ctx,
   onAddToBag,
   bagIds,
+  brandNames = [],
 }: {
   data: BagLineupResponse;
   ctx: FlightContext;
   onAddToBag: (discId: string) => void;
   bagIds: string[];
+  /** Brands the suggestions were restricted to, so a gap can say what had nothing. */
+  brandNames?: string[];
 }) {
   const [active, setActive] = useState(0);
   const slots = data.slots;
@@ -128,6 +132,7 @@ export function Lineup({
               ctx={ctx}
               bagIds={bagIds}
               showSimilarity={showSimilarity}
+              brandNames={brandNames}
               onAddToBag={onAddToBag}
             />
           ))
@@ -153,12 +158,14 @@ function GapPanel({
   ctx,
   bagIds,
   showSimilarity,
+  brandNames,
   onAddToBag,
 }: {
   gap: SlotGap;
   ctx: FlightContext;
   bagIds: string[];
   showSimilarity: boolean;
+  brandNames: string[];
   onAddToBag: (discId: string) => void;
 }) {
   const severity = gap.severity >= 1.2 ? 'high' : gap.severity >= 0.8 ? 'medium' : 'low';
@@ -176,6 +183,18 @@ function GapPanel({
         <FlightNumbersRow flight={gap.target} />
         {gap.targetWeightRange && <span className="pill">{gap.targetWeightRange}</span>}
       </div>
+
+      {gap.outsideFilter && brandNames.length > 0 && (
+        <p className="outside-note">
+          <strong>No {joinNames(brandNames)} disc fits this gap.</strong> These are the closest from other
+          brands.
+        </p>
+      )}
+      {gap.suggestions.length === 0 && brandNames.length > 0 && (
+        <p className="outside-note">
+          No {joinNames(brandNames)} disc fits this gap, and nothing close turned up from other brands either.
+        </p>
+      )}
 
       {gap.suggestions.length > 0 && (
         <ul className="brand-list">
