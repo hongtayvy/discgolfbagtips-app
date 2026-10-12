@@ -1007,3 +1007,27 @@ html:has(dialog[open]) { overflow: hidden; }
   .auth-dialog { margin-top: 16px; }
   .auth-dialog__panel { padding: 30px 20px 22px; }
 }
+
+/* -------------------------------------------------------- brand matching */
+.brand-panel { display: grid; gap: 14px; }
+.brand-panel > .filters { margin-top: 0; padding-top: 14px; }
+.brand-panel__status {
+  display: grid; gap: 10px; justify-items: start; padding: 14px 16px;
+  background: var(--bg-sunken); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+}
+.brand-panel__status--on {
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-sunken));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+}
+.brand-panel__status p { font-size: 0.88rem; line-height: 1.55; color: var(--text-dim); }
+.brand-panel__status strong { color: var(--text); }
+.brand-panel__chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.brand-panel__count { margin-left: 6px; font-family: var(--mono); font-size: 0.72rem; color: var(--text-faint); }
+
+.widened-note, .outside-note {
+  font-size: 0.85rem; line-height: 1.55; color: var(--text-dim);
+  padding: 12px 15px; border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--rec-accent) 9%, var(--bg-raised));
+  border: 1px solid color-mix(in srgb, var(--rec-accent) 32%, var(--line));
+}
+.widened-note strong, .outside-note strong { color: var(--text); }

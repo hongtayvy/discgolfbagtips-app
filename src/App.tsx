@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { getDisc, getLineup, getWeatherReport } from './api/client';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getDisc, getLineupWithFallback, getWeatherReport } from './api/client';
 import type { BagProfileSummary, RecommendationRequest } from './api/types';
 import type {
   BagEntry,
@@ -21,7 +21,8 @@ import { WeatherToggle } from './components/WeatherToggle';
 import { StabilitySpeedMap } from './components/StabilitySpeedMap';
 import { Lineup } from './components/Lineup';
 import { RecommendationCard } from './components/RecommendationCard';
-import { FilterBar } from './components/FilterBar';
+import { BrandPanel } from './components/BrandPanel';
+import { inferBrands, joinNames, resolveBrands } from './lib/brands';
 import { BagPicker } from './components/BagPicker';
 import { ProfileBar } from './components/ProfileBar';
 import { AuthBar } from './components/AuthBar';
@@ -84,6 +85,18 @@ export default function App() {
   const [lineup, setLineup] = useState<Partial<Record<Weather, BagLineupResponse>>>({});
   const [lineupLoading, setLineupLoading] = useState(false);
   const [filters, setFilters] = useSessionState<RecommendationFilters>('filters', {});
+  /** Suggest from the brands already in the bag. On by default; the player can opt out. */
+  const [matchBag, setMatchBag] = useSessionState<boolean>('matchBagBrands', true, (raw) =>
+    typeof raw === 'boolean' ? raw : null,
+  );
+  /** Weathers where the brand filter matched nothing and the pick is from other brands. */
+  const [widened, setWidened] = useState<Partial<Record<Weather, boolean>>>({});
+
+  const inferred = useMemo(() => inferBrands(bag), [bag]);
+  const brandChoice = useMemo(
+    () => resolveBrands({ chosen: filters.brands, inferred, matchBag }),
+    [filters.brands, inferred, matchBag],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<{ tone: 'ok' | 'error'; message: string } | null>(null);
@@ -105,11 +118,25 @@ export default function App() {
    * Optional blocks are omitted rather than sent empty: `filters: {}` and a
    * half-populated `carriedBag` carry no meaning, and keeping the body minimal
    * avoids asking the server to interpret placeholders.
+   *
+   * Brands come from `brandChoice`: the ones picked by hand, else the bag's own.
+   * - `anyBrand` drops the brand filter, for the "closest from other brands" search.
+   * - `savedOnly` sends only brands the player picked. A saved profile must not
+   *   freeze today's inferred brands, or loading it later would present them as a
+   *   deliberate choice.
    */
   const buildRequest = useCallback(
-    (weatherFor: Weather): RecommendationRequest => {
+    (
+      weatherFor: Weather,
+      opts: { anyBrand?: boolean; savedOnly?: boolean } = {},
+    ): RecommendationRequest => {
+      const brands = opts.anyBrand
+        ? []
+        : opts.savedOnly
+          ? (filters.brands ?? [])
+          : brandChoice.brands;
       const activeFilters = {
-        ...(filters.brands?.length ? { brands: filters.brands } : {}),
+        ...(brands.length ? { brands } : {}),
         ...(filters.excludeBrands?.length ? { excludeBrands: filters.excludeBrands } : {}),
         ...(filters.maxSpeed !== undefined ? { maxSpeed: filters.maxSpeed } : {}),
       };
@@ -127,7 +154,7 @@ export default function App() {
         ...(bagModelId !== undefined ? { carriedBag: { bagModelId } } : {}),
       };
     },
-    [bag, profile, filters, bagModelId],
+    [bag, profile, filters, bagModelId, brandChoice],
   );
 
   /**
@@ -206,17 +233,30 @@ export default function App() {
     });
   };
 
+  /**
+   * Fingerprint of everything the analysis depends on. The re-run effect below
+   * compares against it, so it only fires when something actually changed. Without
+   * this it also fired on the render where the first result appeared, repeating a
+   * just-finished analysis 250ms later.
+   */
+  const requestKey = useMemo(() => JSON.stringify(buildRequest('NORMAL')), [buildRequest]);
+  const analyzedKey = useRef<string | null>(null);
+
   const analyze = useCallback(
     async (scroll = false) => {
       if (!bag.length) return;
+      analyzedKey.current = requestKey;
       setLoading(true);
       setError(null);
       try {
         // Every weather is analysed together so the environment toggle below
         // the result switches between finished answers.
         const { conditions: _conditions, ...base } = buildRequest('NORMAL');
-        const data = await getWeatherReport(base);
-        setReport(data);
+        const { conditions: _wider, ...anyBrand } = buildRequest('NORMAL', { anyBrand: true });
+        // With a brand filter active, a weather it leaves empty is retried without it.
+        const data = await getWeatherReport(base, brandChoice.brands.length ? anyBrand : undefined);
+        setReport(data.report);
+        setWidened(data.widened);
         setLineup({});
         if (scroll)
           requestAnimationFrame(() =>
@@ -228,7 +268,7 @@ export default function App() {
         setLoading(false);
       }
     },
-    [bag.length, buildRequest],
+    [bag.length, buildRequest, brandChoice.brands.length, requestKey],
   );
 
   // The lineup is a second call and can be slow when the embedding service is
@@ -239,7 +279,11 @@ export default function App() {
 
     const controller = new AbortController();
     setLineupLoading(true);
-    getLineup(buildRequest(weather), { signal: controller.signal })
+    getLineupWithFallback(
+      buildRequest(weather),
+      brandChoice.brands.length ? buildRequest(weather, { anyBrand: true }) : undefined,
+      { signal: controller.signal },
+    )
       .then((data) => setLineup((l) => ({ ...l, [weather]: data })))
       .catch(() => {
         // The headline recommendation still stands without the lineup.
@@ -252,13 +296,14 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [report, weather, lineup]);
 
-  // Once a result is on screen, changes to the bag or profile re-run it.
+  // Once a result is on screen, a change to anything it depends on re-runs it.
   const hasReport = report !== null;
   useEffect(() => {
     if (!hasReport || !bag.length) return;
+    if (analyzedKey.current === requestKey) return;
     const id = setTimeout(() => void analyze(), 250);
     return () => clearTimeout(id);
-  }, [hasReport, analyze, bag.length]);
+  }, [hasReport, analyze, bag.length, requestKey]);
 
   /**
    * Alternatives come back without a slot or category, so fetch the canonical
@@ -346,7 +391,7 @@ export default function App() {
 
           <ProfileBar
             refreshKey={authEpoch}
-            buildRequest={() => (bag.length ? buildRequest(weather) : null)}
+            buildRequest={() => (bag.length ? buildRequest(weather, { savedOnly: true }) : null)}
             onLoad={(request, saved) => void loadProfileRequest(request, saved)}
             disabled={!bag.length}
           />
@@ -396,7 +441,6 @@ export default function App() {
 
         <Section step={bag.length ? 3 : 2} title="Your game" hint="Three answers. They change how each disc's line is modelled.">
           <ProfilePicker profile={profile} onChange={setProfile} />
-          <FilterBar filters={filters} onChange={setFilters} />
         </Section>
 
         {bag.length > 0 && (
@@ -428,6 +472,24 @@ export default function App() {
                 Could not resolve “{n}” against the catalog.
               </p>
             ))}
+          </Section>
+        )}
+
+        {bag.length > 0 && (
+          <Section
+            step={5}
+            title="Brands to suggest"
+            hint="Where the suggested discs come from — separate from how you play."
+          >
+            <BrandPanel
+              filters={filters}
+              onFiltersChange={setFilters}
+              inferred={inferred}
+              source={brandChoice.source}
+              effective={brandChoice.brands}
+              matchBag={matchBag}
+              onMatchBagChange={setMatchBag}
+            />
           </Section>
         )}
 
@@ -468,6 +530,18 @@ export default function App() {
               <WeatherToggle weather={weather} onChange={setWeather} />
             </section>
 
+            {widened[weather] && brandChoice.brands.length > 0 && (
+              <p className="widened-note" role="status">
+                <strong>No {joinNames(brandChoice.brands)} disc fits your biggest gap.</strong> This is the
+                closest match from other brands.{' '}
+                {brandChoice.source === 'bag' && (
+                  <button type="button" className="link-button" onClick={() => setMatchBag(false)}>
+                    Stop matching my bag
+                  </button>
+                )}
+              </p>
+            )}
+
             <div className={loading ? 'is-refreshing' : undefined}>
               <RecommendationCard
                 data={result}
@@ -481,6 +555,7 @@ export default function App() {
                 data={lineup[weather]}
                 ctx={ctx}
                 bagIds={bag.map((d) => d.id)}
+                brandNames={brandChoice.brands}
                 onAddToBag={(id) => void addFromRecommendation(id)}
               />
             ) : (

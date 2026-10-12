@@ -1,3 +1,4 @@
+import { fillEmptyGaps, hasEmptyGaps } from '../lib/lineupMerge';
 import type {
   BagLineupResponse,
   BagProfileDetail,
@@ -25,11 +26,14 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 export class ApiError extends Error {
   status?: number;
+  /** The problem type's last path segment, e.g. `no-match-for-filters`. */
+  code?: string;
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, code?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -59,15 +63,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       throw new ApiError('Your sign-in expired. Please sign in again.', 401);
     }
     let message = `Request failed (${res.status}).`;
+    let code: string | undefined;
     try {
       const problem = (await res.json()) as ProblemDetail;
       // The API speaks RFC 7807; prefer its own wording.
       if (problem.detail || problem.title) message = problem.detail ?? problem.title ?? message;
+      code = problem.type?.split('/').filter(Boolean).pop();
     } catch {
       /* not problem+json — keep the status message */
     }
     if (res.status === 429) message = 'Rate limited by the API. Give it a moment and try again.';
-    throw new ApiError(message, res.status);
+    throw new ApiError(message, res.status, code);
   }
 
   // 204 No Content (profile deletes) has no body to parse.
@@ -193,21 +199,47 @@ export function getRecommendation(
   });
 }
 
+export interface WeatherReportResult {
+  report: WeatherReport;
+  /** Weathers where the brand filter matched nothing and the pick is from other brands. */
+  widened: Partial<Record<Weather, boolean>>;
+}
+
 /**
  * Runs the analysis once per weather so the environment toggle switches between
- * finished answers instead of firing a request per tap. The bag and profile are
- * identical across the five; only `conditions.weather` differs.
+ * finished answers instead of firing a request per tap.
+ *
+ * When a brand filter leaves the top gap with nothing, the API answers 422
+ * (`no-match-for-filters`). For that weather only, the same request is retried
+ * without the brand filter and the result is flagged, so the UI can say the
+ * brand has nothing there and show the closest match instead of failing the
+ * whole analysis. Any other error still propagates.
  */
 export async function getWeatherReport(
   body: Omit<RecommendationRequest, 'conditions'>,
+  fallback?: Omit<RecommendationRequest, 'conditions'>,
   { signal }: { signal?: AbortSignal } = {},
-): Promise<WeatherReport> {
-  const responses = await Promise.all(
-    WEATHERS.map((weather) => getRecommendation({ ...body, conditions: { weather } }, { signal })),
+): Promise<WeatherReportResult> {
+  const results = await Promise.all(
+    WEATHERS.map(async (weather) => {
+      try {
+        const response = await getRecommendation({ ...body, conditions: { weather } }, { signal });
+        return { weather, response, widened: false };
+      } catch (err) {
+        const noMatch = err instanceof ApiError && err.status === 422 && err.code === 'no-match-for-filters';
+        if (!fallback || !noMatch) throw err;
+        const response = await getRecommendation({ ...fallback, conditions: { weather } }, { signal });
+        return { weather, response, widened: true };
+      }
+    }),
   );
-  return Object.fromEntries(
-    WEATHERS.map((weather, i) => [weather, responses[i]]),
-  ) as Record<Weather, RecommendationResponse>;
+  return {
+    report: Object.fromEntries(results.map((r) => [r.weather, r.response])) as Record<
+      Weather,
+      RecommendationResponse
+    >,
+    widened: Object.fromEntries(results.map((r) => [r.weather, r.widened])),
+  };
 }
 
 /* ------------------------------------------------------------------ lineup */
@@ -244,4 +276,24 @@ export interface ClaimResult {
 /** Moves bags saved while anonymous onto the signed-in account. Safe to repeat. */
 export function claimSession(): Promise<ClaimResult> {
   return request<ClaimResult>('/api/v1/account/claim-session', { method: 'POST' });
+}
+
+/**
+ * The lineup, with gaps a brand filter left empty filled from an unfiltered
+ * search. The second call is only made when it is needed, so a bag whose brands
+ * cover every gap costs nothing extra.
+ */
+export async function getLineupWithFallback(
+  body: RecommendationRequest,
+  fallback: RecommendationRequest | undefined,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<BagLineupResponse> {
+  const filtered = await getLineup(body, { signal });
+  if (!fallback || !hasEmptyGaps(filtered)) return filtered;
+  try {
+    return fillEmptyGaps(filtered, await getLineup(fallback, { signal }));
+  } catch {
+    // The brand-filtered lineup is still a valid answer; the empty gaps just stay empty.
+    return filtered;
+  }
 }

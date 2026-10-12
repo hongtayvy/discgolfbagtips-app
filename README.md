@@ -101,6 +101,24 @@ header never reflows. The paths are email + password, a forgot-password link
 (with the reset-link return handled), and optionally Google. Each is switched on
 by the variables documented in `.env.example`.
 
+## Brands to suggest
+
+Suggestions follow the brands already in the bag (`src/lib/brands.ts`): an
+all-Innova bag suggests Innova, and a bag that mixes Innova and Discmania suggests
+from both. Nothing is inferred from a single disc, which says too little about
+preference. It is a default, not an override: brands the player picks by hand
+always win, and matching the bag can be switched off. The panel states which of
+those is in effect, so the filter is never a surprise.
+
+When a brand has nothing for a gap, the app says so and shows the closest discs
+from other brands instead of failing or hiding the gap. For the headline pick the
+API answers 422 `no-match-for-filters`; that weather is retried without the brand
+filter and flagged. For the lineup, gaps left empty are filled from a second,
+unfiltered search, made only when it is needed.
+
+A saved profile stores only brands the player picked, never the inferred ones, so
+loading it later does not present today's bag as a deliberate choice.
+
 ## Carry weight and bag models
 
 `GET /api/v1/bags` is a real catalog of bag models with published specs, so the

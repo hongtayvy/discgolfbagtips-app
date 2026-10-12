@@ -284,6 +284,11 @@ export interface SlotGap {
   target: FlightNumbers;
   targetWeightRange?: string;
   suggestions: SuggestedDisc[];
+  /**
+   * Set client-side. True when the brand filter had nothing for this gap and the
+   * suggestions were filled from an unfiltered search instead.
+   */
+  outsideFilter?: boolean;
 }
 
 export interface SlotLineup {
