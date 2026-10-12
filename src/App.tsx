@@ -441,7 +441,7 @@ export default function App() {
                   <button type="button" className="button button--ghost" onClick={exportBag}>
                     Export bag
                   </button>
-                  <button type="button" className="button button--ghost" onClick={clearAll}>
+                  <button type="button" className="button button--ghost button--danger" onClick={clearAll}>
                     Clear bag
                   </button>
                 </>
@@ -527,6 +527,24 @@ export default function App() {
         {bag.length > 0 && (
           <Section
             step={4}
+            title="Brands to suggest"
+            hint="Where the suggested discs come from — separate from how you play."
+          >
+            <BrandPanel
+              filters={filters}
+              onFiltersChange={setFilters}
+              inferred={inferred}
+              source={brandChoice.source}
+              effective={brandChoice.brands}
+              matchBag={matchBag}
+              onMatchBagChange={setMatchBag}
+            />
+          </Section>
+        )}
+
+        {bag.length > 0 && (
+          <Section
+            step={5}
             title="Coverage"
             hint="Where your bag sits on speed and stability — and where it doesn't."
             aside={
@@ -553,24 +571,6 @@ export default function App() {
                 Could not resolve “{n}” against the catalog.
               </p>
             ))}
-          </Section>
-        )}
-
-        {bag.length > 0 && (
-          <Section
-            step={5}
-            title="Brands to suggest"
-            hint="Where the suggested discs come from — separate from how you play."
-          >
-            <BrandPanel
-              filters={filters}
-              onFiltersChange={setFilters}
-              inferred={inferred}
-              source={brandChoice.source}
-              effective={brandChoice.brands}
-              matchBag={matchBag}
-              onMatchBagChange={setMatchBag}
-            />
           </Section>
         )}
 
