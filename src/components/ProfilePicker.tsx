@@ -1,6 +1,6 @@
 import { ToggleGroup, type ToggleOption } from './ToggleGroup';
 import type { CourseType, PlayerProfile, SkillLevel, ThrowingStyle } from '../api/types';
-import { levelForRating, MAX_RATING, MIN_RATING, PDGA_TIERS, parseRating, rangeLabel, tierForRating } from '../lib/pdga';
+import { levelForRating, MAX_RATING, MIN_RATING, PDGA_BANDS, parseRating, rangeLabel } from '../lib/pdga';
 
 const SKILL: ToggleOption<SkillLevel>[] = [
   { value: 'BEGINNER', label: 'Beginner', hint: 'Under about 250 ft' },
@@ -88,8 +88,8 @@ export function ProfilePicker({
               <p id="pdga-rating-result" className="rating-field__result" aria-live="polite">
                 {rating !== null ? (
                   <>
-                    <span aria-hidden="true">→</span> <strong>{tierForRating(rating).name}</strong>{' '}
-                    <span className="rating-field__range">({rangeLabel(tierForRating(rating))})</span>
+                    <span aria-hidden="true">→</span> <strong>{LEVEL_NAME[levelForRating(rating)]}</strong>{' '}
+                    <span className="rating-field__range">({rangeLabel(levelForRating(rating))})</span>
                   </>
                 ) : skillInput.rating === '' ? (
                   <>Currently {LEVEL_NAME[profile.skillLevel]}. Type your rating to change it.</>
@@ -99,7 +99,7 @@ export function ProfilePicker({
               </p>
             </div>
             <p className="skill-input__bands">
-              {PDGA_TIERS.map((t) => `${t.name} ${rangeLabel(t)}`).join(' · ')}
+              {PDGA_BANDS.map((b) => `${LEVEL_NAME[b.level]} ${rangeLabel(b.level)}`).join(' · ')}
             </p>
           </div>
         ) : (

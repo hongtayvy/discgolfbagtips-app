@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { levelForRating, parseRating, PDGA_TIERS, rangeLabel, tierForRating } from './pdga.ts';
+import { levelForRating, parseRating, rangeLabel } from './pdga.ts';
 import { clampShift } from './ui.ts';
 
 describe('PDGA rating → level', () => {
@@ -18,22 +18,11 @@ describe('PDGA rating → level', () => {
     assert.equal(levelForRating(1065), 'PROFESSIONAL');
   });
 
-  it('splits the top level into local and touring pro', () => {
-    assert.equal(tierForRating(969).name, 'Advanced');
-    assert.equal(tierForRating(970).name, 'Local pro');
-    assert.equal(tierForRating(999).name, 'Local pro');
-    assert.equal(tierForRating(1000).name, 'Touring pro');
-    assert.equal(tierForRating(1065).name, 'Touring pro');
-    // The API has no finer level than PROFESSIONAL.
-    assert.equal(levelForRating(999), 'PROFESSIONAL');
-    assert.equal(levelForRating(1000), 'PROFESSIONAL');
-  });
-
-  it('labels each tier for display', () => {
-    assert.deepEqual(
-      PDGA_TIERS.map(rangeLabel),
-      ['under 850', '850–899', '900–969', '970–999', '1000+'],
-    );
+  it('labels each band for display', () => {
+    assert.equal(rangeLabel('BEGINNER'), 'under 850');
+    assert.equal(rangeLabel('INTERMEDIATE'), '850–899');
+    assert.equal(rangeLabel('ADVANCED'), '900–969');
+    assert.equal(rangeLabel('PROFESSIONAL'), '970+');
   });
 });
 
