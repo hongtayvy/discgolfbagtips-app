@@ -48,7 +48,8 @@ function Section({
   children,
   aside,
 }: {
-  step: number;
+  /** Omitted for sections that are not part of the numbered path through the page. */
+  step?: number;
   title: string;
   hint?: string;
   children: React.ReactNode;
@@ -57,7 +58,7 @@ function Section({
   return (
     <section className="section">
       <header className="section__header">
-        <span className="section__step">{step}</span>
+        {step !== undefined && <span className="section__step">{step}</span>}
         <div>
           <h2 className="section__title">{title}</h2>
           {hint && <p className="section__hint">{hint}</p>}
@@ -630,6 +631,23 @@ export default function App() {
                 onAddToBag={(id) => void addFromRecommendation(id)}
               />
             </div>
+
+            {/* Not asked up front: suggestions already follow the brands in the bag. This is only
+                for seeing the same gaps filled from other makers, once there is a result to compare. */}
+            <Section
+              title="Want to see other brands?"
+              hint="Suggestions follow the brands already in your bag. Change that to see the same gaps filled by other makers."
+            >
+              <BrandPanel
+                filters={filters}
+                onFiltersChange={setFilters}
+                inferred={inferred}
+                source={brandChoice.source}
+                effective={brandChoice.brands}
+                matchBag={matchBag}
+                onMatchBagChange={setMatchBag}
+              />
+            </Section>
 
             {lineup[weather] ? (
               <Lineup
