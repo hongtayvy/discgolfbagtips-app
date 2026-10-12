@@ -528,24 +528,6 @@ export default function App() {
         {bag.length > 0 && (
           <Section
             step={4}
-            title="Brands to suggest"
-            hint="Where the suggested discs come from — separate from how you play."
-          >
-            <BrandPanel
-              filters={filters}
-              onFiltersChange={setFilters}
-              inferred={inferred}
-              source={brandChoice.source}
-              effective={brandChoice.brands}
-              matchBag={matchBag}
-              onMatchBagChange={setMatchBag}
-            />
-          </Section>
-        )}
-
-        {bag.length > 0 && (
-          <Section
-            step={5}
             title="Coverage"
             hint="Where your bag sits on speed and stability — and where it doesn't."
             aside={
