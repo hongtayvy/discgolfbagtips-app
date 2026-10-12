@@ -119,6 +119,16 @@ unfiltered search, made only when it is needed.
 A saved profile stores only brands the player picked, never the inferred ones, so
 loading it later does not present today's bag as a deliberate choice.
 
+## Skill level and PDGA rating
+
+Skill can be picked as a level or entered as a PDGA rating (`src/lib/pdga.ts`).
+The API only takes four levels, so a rating is mapped onto them. PDGA publishes
+division ceilings (800, 850, 900, 935, 970, with 970+ its Professional division)
+and not "beginner" or "advanced", so the grouping is this app's judgement:
+under 850 Beginner, 850–899 Intermediate, 900–969 Advanced, 970+ Pro. The cutoffs
+are shown next to the input, and the level buttons stay available as an override.
+A half-typed or implausible rating never changes the level.
+
 ## Carry weight and bag models
 
 `GET /api/v1/bags` is a real catalog of bag models with published specs, so the

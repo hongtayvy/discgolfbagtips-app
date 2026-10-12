@@ -180,7 +180,13 @@ ul { margin: 0; padding: 0; list-style: none; }
   background: var(--bg-sunken); border: 1px solid var(--line);
   border-radius: var(--radius-sm); padding: 0 14px;
 }
-.disc-search__field:focus-within { border-color: var(--accent); }
+/* One focus indicator, drawn by the field. The input inside is borderless, so the
+   browser-wide outline used to draw a second box floating in the middle of it. */
+.disc-search__field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.disc-search__input:focus-visible { outline: none; }
 .disc-search__icon { color: var(--text-faint); font-size: 1.1rem; }
 .disc-search__input {
   flex: 1; background: none; border: 0; outline: none;
@@ -1031,3 +1037,44 @@ html:has(dialog[open]) { overflow: hidden; }
   border: 1px solid color-mix(in srgb, var(--rec-accent) 32%, var(--line));
 }
 .widened-note strong, .outside-note strong { color: var(--text); }
+
+/* ------------------------------------------------------------- info tip */
+.import-group { display: inline-flex; align-items: center; gap: 4px; }
+.infotip { position: relative; display: inline-flex; }
+.infotip__button {
+  width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
+  border: 0; border-radius: 50%; background: transparent; color: var(--text-faint);
+}
+.infotip__button:hover, .infotip__button[aria-expanded='true'] { background: var(--bg-sunken); color: var(--text); }
+.infotip__panel {
+  position: absolute; z-index: 40; top: calc(100% + 8px); left: 0;
+  width: min(330px, calc(100vw - 52px)); padding: 16px 18px;
+  background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg); text-align: left;
+  font-size: 0.84rem; line-height: 1.55; color: var(--text-dim);
+  display: grid; gap: 10px;
+}
+.infotip__title { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; color: var(--text); }
+.infotip__panel strong { color: var(--text); }
+.infotip__panel ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; list-style: decimal; }
+.infotip__panel code {
+  font-family: var(--mono); font-size: 0.78rem; padding: 1px 5px;
+  background: var(--bg-sunken); border-radius: 4px; color: var(--text);
+}
+.infotip__note { font-size: 0.78rem; color: var(--text-faint); }
+
+/* ------------------------------------------------------- skill rating */
+.skill-input { display: grid; gap: 8px; align-content: start; }
+.skill-input__switch { justify-self: start; }
+.rating-field { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rating-field__input {
+  width: 108px; padding: 11px 12px; font: 600 1rem var(--mono); letter-spacing: 0.04em;
+  background: var(--bg-sunken); color: var(--text);
+  border: 1px solid var(--line); border-radius: 11px;
+}
+.rating-field__input:focus-visible { border-color: var(--accent); }
+.rating-field__input[aria-invalid='true'] { border-color: var(--danger); }
+.rating-field__result { margin: 0; font-size: 0.86rem; color: var(--text-dim); }
+.rating-field__result strong { color: var(--text); }
+.rating-field__range { color: var(--text-faint); }
+.skill-input__bands { font-size: 0.72rem; color: var(--text-faint); line-height: 1.5; }
