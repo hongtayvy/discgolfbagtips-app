@@ -68,8 +68,10 @@ describe('validate', () => {
     assert.equal(parseBag([disc, preRewriteDisc]), null);
   });
 
-  it('drops duplicates in a valid bag', () => {
-    assert.equal(parseBag([disc, disc])?.length, 1);
+  it('keeps repeated molds and keys them apart', () => {
+    const bag = parseBag([disc, disc]);
+    assert.equal(bag?.length, 2);
+    assert.notEqual(bag?.[0].entryId ?? bag?.[0].id, bag?.[1].entryId ?? bag?.[1].id);
   });
 
   it('rejects non-arrays and oversized bags', () => {

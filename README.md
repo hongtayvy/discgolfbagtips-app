@@ -269,7 +269,7 @@ files still load, with the newer fields unset.
 
 An imported file is untrusted input: `src/lib/bagFile.ts` validates every field,
 rejects unknown enum values and out-of-range flight numbers, truncates long
-strings, drops unknown keys and duplicate discs, and caps the bag at 30 (the
+strings, drops unknown keys, keeps repeated molds (each copy keyed apart), and caps the bag at 30 (the
 API's own limit). Version 1 exports are refused rather than migrated — their
 disc ids came from a bundled list the live catalog does not know. Version 2
 files still load, with plastic, weight and wear unset. A file that fails

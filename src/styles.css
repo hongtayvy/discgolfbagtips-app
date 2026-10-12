@@ -216,7 +216,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--text); font: inherit; text-align: left; cursor: pointer;
 }
 .disc-search__result.is-active { background: var(--bg-sunken); }
-.disc-search__result.is-added { opacity: 0.45; cursor: default; }
+.disc-search__owned { display: block; font-size: 0.74rem; font-weight: 600; color: var(--accent); }
 .disc-search__result-name { font-weight: 600; font-size: 0.92rem; }
 .disc-search__result-name em { font-style: normal; color: var(--text-faint); font-weight: 450; margin-left: 8px; font-size: 0.85rem; }
 .disc-search__result-numbers { font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim); }

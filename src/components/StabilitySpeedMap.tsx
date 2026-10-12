@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { stabilityIndex } from '../lib/flight';
-import type { Disc, FlightGapExplanation, RecommendedDisc, Slot } from '../api/types';
+import type { BagEntry, FlightGapExplanation, RecommendedDisc, Slot } from '../api/types';
+import { entryKey } from '../lib/bagEntries';
 import { num, SLOT_LABEL } from '../lib/format';
 
 const W = 680;
@@ -28,7 +29,7 @@ const CLASS_STABILITY: Record<string, [number, number]> = {
 };
 
 interface Props {
-  bag: Disc[];
+  bag: BagEntry[];
   gaps: FlightGapExplanation[];
   recommended?: RecommendedDisc;
 }
@@ -122,9 +123,9 @@ export function StabilitySpeedMap({ bag, gaps, recommended }: Props) {
 
         {points.map(({ disc, cx, cy }) => (
           <g
-            key={disc.id}
-            className={`coverage-map__point${hovered === disc.id ? ' is-hovered' : ''}`}
-            onMouseEnter={() => setHovered(disc.id)}
+            key={entryKey(disc)}
+            className={`coverage-map__point${hovered === entryKey(disc) ? ' is-hovered' : ''}`}
+            onMouseEnter={() => setHovered(entryKey(disc))}
             onMouseLeave={() => setHovered(null)}
           >
             <circle cx={cx} cy={cy} r="7" />

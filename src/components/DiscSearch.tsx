@@ -5,8 +5,8 @@ import { humanizeStability } from '../lib/flight';
 import type { Disc } from '../api/types';
 
 interface Props {
-  /** Ids already in the bag — shown as added, not selectable twice. */
-  selectedIds: string[];
+  /** Copies of each catalog disc already in the bag. A mold can be added again. */
+  counts: Record<string, number>;
   onSelect: (disc: Disc) => void;
 }
 
@@ -15,7 +15,7 @@ interface Props {
  * disc enters the bag: there is no free-text disc name entry, so every disc in
  * the bag has real flight numbers behind it.
  */
-export function DiscSearch({ selectedIds, onSelect }: Props) {
+export function DiscSearch({ counts, onSelect }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Disc[]>([]);
   const [open, setOpen] = useState(false);
@@ -60,7 +60,6 @@ export function DiscSearch({ selectedIds, onSelect }: Props) {
   }, []);
 
   const choose = (disc: Disc) => {
-    if (selectedIds.includes(disc.id)) return;
     onSelect(disc);
     setQuery('');
     setOpen(true);
@@ -127,25 +126,25 @@ export function DiscSearch({ selectedIds, onSelect }: Props) {
             </li>
           )}
           {results.map((disc, i) => {
-            const added = selectedIds.includes(disc.id);
+            const owned = counts[disc.id] ?? 0;
             return (
               <li key={disc.id} id={`${listId}-${disc.id}`} role="option" aria-selected={i === active}>
                 <button
                   type="button"
-                  className={`disc-search__result${i === active ? ' is-active' : ''}${added ? ' is-added' : ''}`}
-                  disabled={added}
+                  className={`disc-search__result${i === active ? ' is-active' : ''}${owned ? ' is-added' : ''}`}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => choose(disc)}
                 >
                   <span className="disc-search__result-name">
                     {disc.name}
                     <em>{disc.brand}</em>
+                    {owned > 0 && <span className="disc-search__owned">×{owned} in bag — add another</span>}
                   </span>
                   <span className="disc-search__result-numbers">
                     {disc.speed} / {disc.glide} / {disc.turn} / {disc.fade}
                   </span>
                   <span className="disc-search__result-stability">
-                    {added ? 'In bag' : humanizeStability(disc.stability)}
+                    {humanizeStability(disc.stability)}
                   </span>
                 </button>
               </li>
