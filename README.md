@@ -1,4 +1,4 @@
-# Bag Tips — web
+# Disc Golf Bag Tips — web
 
 React + TypeScript front end for the disc golf bag analysis tool. Build your bag
 from the catalog, answer three questions about your game, and get one recommended
@@ -79,6 +79,21 @@ The card then redraws for how *you* own that disc: the flight curve takes the
 shift (negative adds turn, positive adds fade), the stability line shows the
 resolved value with an `adjusted` marker, and the server's breakdown is printed
 underneath.
+
+## Brand and sign-in
+
+The UI follows the Disc Golf Bag Tips brand identity, v1.0. The palette is in `src/styles.css`
+as tokens: Forest, Sage, Cream, Charcoal and Lime. Headings use Plus Jakarta Sans
+and body text uses Inter. **Lime and Sage are fill colours only.** As text on
+Cream they measure 1.16:1 and 2.43:1 against a 4.5:1 minimum, so highlight text
+uses an olive derived from Lime instead. Logos are the official artwork from the logo kit, cropped (never redrawn) from
+the originals in `brand/source/`. See `brand/README.md`.
+
+Sign-in is a native `<dialog>` (`AuthDialog`). The browser supplies the focus
+trap, Escape-to-close and the inert background. It opens over the page, so the
+header never reflows. The paths are email + password, a forgot-password link
+(with the reset-link return handled), and optionally Google. Each is switched on
+by the variables documented in `.env.example`.
 
 ## Carry weight and bag models
 

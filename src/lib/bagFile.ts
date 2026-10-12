@@ -41,7 +41,7 @@ export function parseBagFile(source: string): ParseResult {
     return { ok: false, error: "That file isn't valid JSON." };
   }
   if (!isObject(raw)) return { ok: false, error: "That file isn't a bag export." };
-  if (raw.format !== BAG_FILE_FORMAT) return { ok: false, error: "That file isn't a Bag Tips export." };
+  if (raw.format !== BAG_FILE_FORMAT) return { ok: false, error: "That file isn't a Disc Golf Bag Tips export." };
 
   // Version 1 files hold ids from the old bundled disc list, which the live
   // catalog does not know. Migrating them would produce a bag the API cannot

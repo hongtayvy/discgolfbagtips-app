@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuthSession } from '../lib/useAuthSession';
 import { deleteProfile, listProfiles, loadProfile, saveProfile } from '../api/client';
 import type { BagProfileSummary, RecommendationRequest } from '../api/types';
 
@@ -28,6 +30,7 @@ export function ProfileBar({
   /** Changes when the signed-in user does, so the list is refetched. */
   refreshKey?: number;
 }) {
+  const session = useAuthSession();
   const [profiles, setProfiles] = useState<BagProfileSummary[]>([]);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -158,10 +161,25 @@ export function ProfileBar({
         </ul>
       )}
 
-      <p className="profiles__caveat">
-        Signed out, saved bags live with this browser's session and will not appear on another device.
-        Sign in to keep them on your account, or use <strong>Export bag</strong> to move one.
-      </p>
+      {session !== undefined && (
+        <p className="profiles__caveat">
+          {session
+            ? 'Saved to your account — these bags are there wherever you sign in.'
+            : supabase
+              ? (
+                  <>
+                    Signed out, saved bags live with this browser's session and will not appear on another
+                    device. Sign in to keep them on your account, or use <strong>Export bag</strong> to move one.
+                  </>
+                )
+              : (
+                  <>
+                    Saved bags live with this browser's session and will not appear on another device. Use{' '}
+                    <strong>Export bag</strong> to move one.
+                  </>
+                )}
+        </p>
+      )}
     </div>
   );
 }
