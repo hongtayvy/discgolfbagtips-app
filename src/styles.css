@@ -129,7 +129,10 @@ ul { margin: 0; padding: 0; list-style: none; }
 .section__hint { color: var(--text-dim); font-size: 0.87rem; margin-top: 4px; max-width: 68ch; line-height: 1.5; }
 .section__aside { margin-left: auto; }
 
-.toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: stretch; }
+/* Destructive, so set apart from the file actions rather than lined up as a peer. */
+.button--danger { color: var(--danger); }
+.toolbar .button--danger { margin-left: 8px; }
 
 .transfer-note {
   margin-top: 12px; padding: 10px 13px; border-radius: var(--radius-sm);
@@ -847,6 +850,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   .section__header { flex-wrap: wrap; }
   .section__aside { order: 3; width: 100%; margin-left: 0; }
   .toolbar { justify-content: flex-start; }
+  .toolbar .button--danger { margin-left: auto; }
   /* Keep the map readable rather than shrinking the axes to nothing. */
   .coverage-map svg { min-width: 520px; }
   .stability-strip { grid-template-columns: repeat(3, 1fr); }
@@ -1039,7 +1043,16 @@ html:has(dialog[open]) { overflow: hidden; }
 .widened-note strong, .outside-note strong { color: var(--text); }
 
 /* ------------------------------------------------------------- info tip */
-.import-group { display: inline-flex; align-items: center; gap: 4px; }
+.import-group {
+  display: inline-flex; align-items: stretch;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+/* Import and its explainer read as one control, not two neighbours. */
+.import-group .button { border: 0; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.import-group .infotip__button {
+  height: auto; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-left: 1px solid var(--line);
+}
 .infotip { position: relative; display: inline-flex; }
 .infotip__button {
   width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
