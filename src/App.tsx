@@ -17,6 +17,11 @@ import { downloadBag, parseBagFile } from './lib/bagFile';
 import { DiscSearch } from './components/DiscSearch';
 import { DiscCard } from './components/DiscCard';
 import { ProfilePicker, type SkillInput } from './components/ProfilePicker';
+import { SettingsStatus } from './components/SettingsStatus';
+import { parseRating } from './lib/pdga';
+import { setTheme, useTheme } from './lib/theme';
+import { useAccountSettings } from './lib/useAccountSettings';
+import type { SettingsSnapshot } from './lib/accountSettings';
 import { InfoTip } from './components/InfoTip';
 import { WeatherToggle } from './components/WeatherToggle';
 import { StabilitySpeedMap } from './components/StabilitySpeedMap';
@@ -102,6 +107,35 @@ export default function App() {
   const [matchBag, setMatchBag] = useSessionState<boolean>('matchBagBrands', true, (raw) =>
     typeof raw === 'boolean' ? raw : null,
   );
+  const { theme } = useTheme();
+  /** Everything about the player that follows them across devices once signed in. */
+  const localSettings = useMemo<SettingsSnapshot>(
+    () => ({
+      skillLevel: profile.skillLevel,
+      skillInputMode: skillInput.mode,
+      pdgaRating: parseRating(skillInput.rating),
+      throwingStyle: profile.throwingStyle,
+      courseType: profile.courseType,
+      theme,
+    }),
+    [profile, skillInput, theme],
+  );
+  const settingsSync = useAccountSettings(localSettings, (chosen) => {
+    if (chosen.skillLevel || chosen.throwingStyle || chosen.courseType) {
+      setProfile((p) => ({
+        skillLevel: chosen.skillLevel ?? p.skillLevel,
+        throwingStyle: chosen.throwingStyle ?? p.throwingStyle,
+        courseType: chosen.courseType ?? p.courseType,
+      }));
+    }
+    if (chosen.skillInputMode || chosen.pdgaRating != null) {
+      setSkillInput((cur) => ({
+        mode: chosen.skillInputMode ?? cur.mode,
+        rating: chosen.pdgaRating != null ? String(chosen.pdgaRating) : cur.rating,
+      }));
+    }
+    if (chosen.theme) setTheme(chosen.theme);
+  });
   /** Weathers where the brand filter matched nothing and the pick is from other brands. */
   const [widened, setWidened] = useState<Partial<Record<Weather, boolean>>>({});
 
@@ -178,7 +212,8 @@ export default function App() {
   const loadProfileRequest = async (request: RecommendationRequest, saved: BagProfileSummary) => {
     setReport(null);
     setLineup({});
-    if (request.profile) setProfile(request.profile);
+    // Your game belongs to the player, not the bag, so a saved bag's embedded
+    // profile is deliberately not applied here.
     if (request.filters) setFilters(request.filters);
     setBagModelId(request.carriedBag?.bagModelId);
 
@@ -475,7 +510,12 @@ export default function App() {
           </Section>
         )}
 
-        <Section step={bag.length ? 3 : 2} title="Your game" hint="Three answers. They change how each disc's line is modelled.">
+        <Section
+          step={bag.length ? 3 : 2}
+          title="Your game"
+          hint="Three answers. They change how each disc's line is modelled."
+          aside={<SettingsStatus state={settingsSync} />}
+        >
           <ProfilePicker
             profile={profile}
             onChange={setProfile}
@@ -612,8 +652,8 @@ export default function App() {
 
       <footer className="app__footer">
         <p>
-          Session-only — your bag lives in this tab and the API's session cookie, never behind a login.
-          Flight curves are a model, not a promise.
+          Your bag lives in this tab until you save it. Signed in, your game and theme follow your account
+          to every device. Flight curves are a model, not a promise.
         </p>
       </footer>
     </div>

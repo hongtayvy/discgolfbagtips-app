@@ -431,3 +431,19 @@ export interface BagProfileDetail {
   profile: BagProfileSummary;
   request: RecommendationRequest;
 }
+
+/* ---------------------------------------------------------------- settings */
+
+/**
+ * `PlayerSettings`: a signed-in player's standing preferences. Every field is
+ * nullable — null means they have not chosen yet — and the API only accepts the
+ * uppercase enum spellings below.
+ */
+export interface PlayerSettingsWire {
+  skillLevel: SkillLevel | null;
+  skillInputMode: 'LEVEL' | 'PDGA' | null;
+  pdgaRating: number | null;
+  throwingStyle: ThrowingStyle | null;
+  courseType: CourseType | null;
+  theme: 'LIGHT' | 'DARK' | null;
+}

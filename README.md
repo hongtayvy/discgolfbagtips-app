@@ -86,8 +86,9 @@ The UI follows the Disc Golf Bag Tips brand identity, v1.0. The palette is in `s
 as tokens: Forest, Sage, Cream, Charcoal and Lime. Headings use Plus Jakarta Sans
 and body text uses Inter. **Lime and Sage are fill colours only.** As text on
 Cream they measure 1.16:1 and 2.43:1 against a 4.5:1 minimum, so highlight text
-uses an olive derived from Lime instead. **Theme.** Cream is the default. Dark mode is an explicit header toggle, stored
-per browser (`src/lib/theme.ts`) and applied to `<html data-theme>` by an inline
+uses an olive derived from Lime instead. **Theme.** Cream is the default. Dark mode is an explicit header toggle. Signed in, it is
+saved on the account (see "Your game follows your account"); this browser also caches it
+(`src/lib/theme.ts`) and applies it to `<html data-theme>` by an inline
 script before first paint. It deliberately does not follow the device's
 `prefers-color-scheme`: the kit only defines the light look, and a site that
 turns dark on its own reads as a bug.
@@ -156,16 +157,30 @@ delete round-trip is in `ProfileBar`. Loading one re-fetches each disc from the
 catalog to rebuild the cards, and reports how many were dropped if the catalog no
 longer knows them.
 
-**These are not user accounts.** The API exposes no authentication — no security
-schemes in the OpenAPI document, no login endpoint — and profiles are keyed by
-the `BAGTIPS_SESSION` cookie. Verified directly: a second client with no cookie
-gets an empty list from `/profiles` and a 404 loading a known id. So a saved bag
-does not follow you to another browser or device, and goes when the cookie does.
-The UI says this plainly rather than implying a sign-in exists, and the bag file
-export stays the portable route between devices.
+**Whose bags these are.** Signed in, saved bags belong to the Supabase account and
+follow you to any browser or device. Signed out they are keyed by the
+`BAGTIPS_SESSION` cookie, so they stay in that browser and go when the cookie
+does; signing in moves them onto the account (`POST /api/v1/account/claim-session`).
+The bag file export stays the portable route for a bag you do not want on an account.
 
-Real accounts need auth on the backend first; the front end would then swap the
-cookie for whatever identity mechanism lands.
+Loading a saved bag restores its discs, bag model and brand filters, but not
+"Your game": that belongs to the player, not the bag.
+
+## Your game follows your account
+
+Skill level, whether it is entered as a level or a PDGA rating, the rating itself,
+dominant throw, usual course and the light/dark theme are saved on the account
+through `GET` and `PATCH /api/v1/account/settings` (`src/lib/useAccountSettings.ts`).
+
+- **On sign-in** the saved settings are fetched and applied. Anything the account
+  has not got yet is filled from what is already on screen, so a first sign-in
+  keeps what you had picked.
+- **After that** changes are saved about half a second after you stop, as a diff
+  against what the server last confirmed. The server merges, so two browsers
+  changing different things do not overwrite each other.
+- **Signed out** nothing is synced: the choices live in this tab, and the theme in
+  this browser's storage. The Your game section says which of the two applies.
+- **If saving fails** the choices stay in the browser and the next change retries.
 
 ## Redundancy
 
@@ -312,9 +327,9 @@ anything that fails is dropped and cleared rather than coerced, and
 `ErrorBoundary` catches whatever still gets through so a render error can never
 produce a blank page again.
 
-**State.** Session-only, no accounts: bag and profile live in `sessionStorage`
-(`src/lib/session.ts`) and the API tracks its own session by cookie, so a reload
-keeps your work and closing the tab starts clean. Once a result is on screen, any
+**State.** The working bag lives in `sessionStorage` (`src/lib/session.ts`) and the
+API tracks an anonymous session by cookie, so a reload keeps your work and closing
+the tab starts clean. Signed in, your game and theme are also kept on the account. Once a result is on screen, any
 change to the bag or profile re-runs all five analyses automatically.
 
 There is deliberately no shared component library yet — patterns get extracted

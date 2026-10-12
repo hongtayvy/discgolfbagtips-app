@@ -1078,3 +1078,14 @@ html:has(dialog[open]) { overflow: hidden; }
 .rating-field__result strong { color: var(--text); }
 .rating-field__range { color: var(--text-faint); }
 .skill-input__bands { font-size: 0.72rem; color: var(--text-faint); line-height: 1.5; }
+
+/* Where "Your game" is kept: account, or just this browser. */
+.settings-status {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  text-align: right;
+}
+.settings-status--error {
+  color: var(--danger);
+}
