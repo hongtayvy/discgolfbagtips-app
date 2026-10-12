@@ -115,7 +115,7 @@ export function ProfilePicker({
           className="link-button skill-input__switch"
           onClick={() => switchMode(usingRating ? 'level' : 'pdga')}
         >
-          {usingRating ? 'Pick a level instead' : 'Use my PDGA rating instead'}
+          {usingRating ? "Don't have a PDGA rating?" : 'Use my PDGA rating instead'}
         </button>
       </div>
 
