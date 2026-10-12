@@ -31,7 +31,7 @@ export function ToggleGroup<T extends string>({
   };
 
   return (
-    <div className={`toggle-group toggle-group--${variant}`}>
+    <div className={`toggle-group toggle-group--${variant}`} data-count={options.length}>
       <span className="toggle-group__label">{label}</span>
       <div
         className="toggle-group__track"

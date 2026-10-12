@@ -383,7 +383,11 @@ ul { margin: 0; padding: 0; list-style: none; }
 .flight-path__tee { fill: var(--text-faint); }
 
 /* ---------------------------------------------------------------- toggles */
-.picker-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+/* A toggle needs ~310px to lay four options on one row (Skill level), and 3-across
+   used to start at 240px per column, so the options overflowed their box between
+   roughly 860 and 1040px. 300px per column makes the grid drop to two columns
+   there instead; the container queries below cover whatever is still narrower. */
+.picker-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
 .picker-grid--conditions { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
 .toggle-group__label {
@@ -408,6 +412,22 @@ ul { margin: 0; padding: 0; list-style: none; }
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .toggle-group__icon { font-size: 0.95rem; }
+
+/* The toggle responds to the width it is actually given, not the viewport, so it
+   is right in a two-column grid, a three-column grid, or a phone. */
+.toggle-group { container-type: inline-size; min-width: 0; }
+
+/* Four options that cannot share one row become a 2x2 block instead of spilling. */
+@container (max-width: 312px) {
+  .toggle-group[data-count='4'] .toggle-group__track {
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Three options in a very narrow column: tighten, don't overflow. */
+@container (max-width: 290px) {
+  .toggle-group[data-count='3'] .toggle-group__option { padding-inline: 4px; gap: 4px; font-size: 0.8rem; }
+}
 .toggle-group--chunky .toggle-group__option { flex-direction: column; gap: 5px; padding: 12px 8px; }
 .toggle-group--chunky .toggle-group__icon { font-size: 1.3rem; }
 
