@@ -98,9 +98,19 @@ export function ProfilePicker({
                 )}
               </p>
             </div>
-            <p className="skill-input__bands">
-              {PDGA_BANDS.map((b) => `${LEVEL_NAME[b.level]} ${rangeLabel(b.level)}`).join(' · ')}
-            </p>
+            <ul className="skill-scale" aria-label="What each rating means for your game">
+              {PDGA_BANDS.map((b) => (
+                <li
+                  key={b.level}
+                  className="skill-scale__row"
+                  aria-current={b.level === profile.skillLevel ? 'true' : undefined}
+                >
+                  <span className="skill-scale__name">{LEVEL_NAME[b.level]}</span>
+                  <span className="skill-scale__rating">{rangeLabel(b.level)}</span>
+                  <span className="skill-scale__hint">{SKILL.find((o) => o.value === b.level)?.hint}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : (
           <ToggleGroup
