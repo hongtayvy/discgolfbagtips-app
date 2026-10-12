@@ -49,27 +49,27 @@
   color-scheme: light;
 }
 
-/* Dark: the same brand, inverted around Forest rather than a generic grey. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1a15;
-    --bg-raised: #15231c;
-    --bg-sunken: #0b140f;
-    --line: #263a30;
-    --line-soft: #1c2c24;
-    --text: var(--cream);
-    --text-dim: #b9c4bc;
-    --text-faint: #8c9c91;
+/* Dark: the same brand, inverted around Forest rather than a generic grey.
+   Opt-in via <html data-theme="dark"> — see src/lib/theme.ts. It deliberately
+   does not follow prefers-color-scheme, so the site never turns dark unasked. */
+:root[data-theme='dark'] {
+  --bg: #0f1a15;
+  --bg-raised: #15231c;
+  --bg-sunken: #0b140f;
+  --line: #263a30;
+  --line-soft: #1c2c24;
+  --text: var(--cream);
+  --text-dim: #b9c4bc;
+  --text-faint: #8c9c91;
 
-    --accent: #a9c7a3;
-    --accent-deep: #8cb086;
-    --on-accent: var(--forest);
-    --rec-accent: var(--lime);
-    --danger: #f97066;
-    --shadow: 0 12px 32px rgb(0 0 0 / 0.35);
-    --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
-    color-scheme: dark;
-  }
+  --accent: #a9c7a3;
+  --accent-deep: #8cb086;
+  --on-accent: var(--forest);
+  --rec-accent: var(--lime);
+  --danger: #f97066;
+  --shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -840,16 +840,17 @@ ul { margin: 0; padding: 0; list-style: none; }
 .app__header { border-bottom: 1px solid var(--line-soft); margin-bottom: 28px; }
 .app__brand { margin: 0; font-size: inherit; }
 
-/* The official logo images. They are Forest artwork on transparency; on dark
-   backgrounds the kit's single-colour white version is used instead. */
+/* The official logo images. They are Forest artwork on transparency; in dark
+   mode the kit's single-colour white version is used instead. */
 .brand-logo { display: block; max-width: 100%; height: auto; }
-@media (prefers-color-scheme: dark) {
-  .brand-logo { filter: brightness(0) invert(1); }
-}
+:root[data-theme='dark'] .brand-logo { filter: brightness(0) invert(1); }
 
 /* Kit rule: clear space equal to the height of the monogram's "D" — half the
    logo's height — on every side. The header keeps that much room around it. */
-.app__brand { padding-block: 0; margin-right: 20px; line-height: 0; }
+.app__brand { padding-block: 0; margin-right: 12px; line-height: 0; min-width: 0; flex: 0 1 auto; }
+/* One row always: the logo gives way before the controls wrap under it. */
+.app__header { flex-wrap: nowrap; }
+.app__actions { flex: none; }
 
 /* CTA: the kit's Lime "key action". Lime is a fill colour only. */
 .button--cta {
@@ -858,7 +859,16 @@ ul { margin: 0; padding: 0; list-style: none; }
 .button--cta:hover:not(:disabled) { background: color-mix(in srgb, var(--cta) 88%, #000); }
 
 /* ----------------------------------------------------------------- auth */
-.auth { display: flex; align-items: center; margin-left: auto; }
+.app__actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.auth { display: flex; align-items: center; }
+
+.theme-toggle {
+  width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--bg-raised); color: var(--text-dim);
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.theme-toggle:hover { color: var(--text); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
 
 .account { position: relative; }
 .account__avatar {
