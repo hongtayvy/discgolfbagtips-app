@@ -1126,3 +1126,16 @@ html:has(dialog[open]) { overflow: hidden; }
 .settings-status--error {
   color: var(--danger);
 }
+
+/* Confirmation for a disc added from a result, visible wherever you are on the page. */
+.toast {
+  position: fixed; z-index: 60; left: 50%; bottom: 16px; transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  background: var(--forest); color: var(--cream); box-shadow: var(--shadow-lg);
+  font-size: 0.86rem; line-height: 1.45;
+}
+.toast strong { color: #fff; }
+.toast__actions { display: inline-flex; gap: 14px; margin-left: auto; }
+.toast .link-button { color: var(--lime); font-weight: 600; }
