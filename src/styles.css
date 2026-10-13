@@ -1139,3 +1139,10 @@ html:has(dialog[open]) { overflow: hidden; }
 .toast strong { color: #fff; }
 .toast__actions { display: inline-flex; gap: 14px; margin-left: auto; }
 .toast .link-button { color: var(--lime); font-weight: 600; }
+
+/* Bag search: the current pick, with a way to clear it. */
+.bag-search__current {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin: 8px 0 0; font-size: 0.86rem; color: var(--text-dim);
+}
+.bag-search__current strong { color: var(--text); }
