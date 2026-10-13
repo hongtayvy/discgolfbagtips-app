@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { getBags } from '../api/client';
 import type { BagFit, BagSummary, CarryWeight } from '../api/types';
+import { filterBags } from '../lib/bagSearch';
 
 const lb = (pounds: number | null | undefined) => (pounds == null ? null : `${pounds.toFixed(1)} lb`);
 
@@ -11,6 +12,149 @@ const capacityText = (bag: BagSummary) => {
     ? `${bag.capacityMin}–${bag.capacityMax} discs`
     : `${bag.capacityMax} discs`;
 };
+
+const MAX_RESULTS = 40;
+
+/**
+ * Type-ahead over the bag-model catalog, in the same shape as the disc search.
+ * The catalog is loaded once, so filtering is local and instant.
+ */
+function BagSearch({
+  bags,
+  selected,
+  onSelect,
+}: {
+  bags: BagSummary[];
+  selected: BagSummary | null;
+  onSelect: (id: number | undefined) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const listId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const matches = useMemo(() => filterBags(bags, query), [bags, query]);
+  const shown = matches.slice(0, MAX_RESULTS);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  const choose = (bag: BagSummary) => {
+    onSelect(bag.id);
+    setQuery('');
+    setOpen(false);
+    inputRef.current?.focus();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!open && (e.key === 'ArrowDown' || e.key === 'Enter')) {
+      e.preventDefault();
+      setOpen(true);
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActive((i) => Math.min(i + 1, shown.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const bag = shown[active];
+      if (bag) choose(bag);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className="field">
+      <label className="field__label" htmlFor={`${listId}-input`}>
+        Your bag
+      </label>
+      <div className="disc-search" ref={rootRef}>
+        <div className="disc-search__field">
+          <span className="disc-search__icon" aria-hidden="true">
+            ⌕
+          </span>
+          <input
+            id={`${listId}-input`}
+            ref={inputRef}
+            type="text"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={open && shown[active] ? `${listId}-${shown[active].id}` : undefined}
+            className="disc-search__input"
+            placeholder={selected ? `${selected.brand} ${selected.model} — search to change` : 'Search bags by brand or model…'}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActive(0);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={onKeyDown}
+          />
+        </div>
+
+        {open && (
+          <ul className="disc-search__results" id={listId} role="listbox" aria-label="Bag models">
+            {!shown.length && (
+              <li className="disc-search__empty">
+                {bags.length ? `No bags match “${query.trim()}”.` : 'No bag models loaded yet.'}
+              </li>
+            )}
+            {shown.map((b, i) => (
+              <li key={b.id} id={`${listId}-${b.id}`} role="option" aria-selected={i === active}>
+                <button
+                  type="button"
+                  className={`disc-search__result${i === active ? ' is-active' : ''}`}
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() => choose(b)}
+                >
+                  <span className="disc-search__result-name">
+                    {b.brand}
+                    <em>{b.model}</em>
+                  </span>
+                  <span className="disc-search__result-numbers">
+                    {capacityText(b)}
+                    {b.emptyWeightPounds != null ? ` · ${b.emptyWeightPounds} lb` : ''}
+                  </span>
+                  <span className="disc-search__result-stability">{b.bagType.toLowerCase()}</span>
+                </button>
+              </li>
+            ))}
+            {matches.length > shown.length && (
+              <li className="disc-search__empty">
+                Showing {shown.length} of {matches.length} — keep typing to narrow it down.
+              </li>
+            )}
+          </ul>
+        )}
+      </div>
+
+      {selected && (
+        <p className="bag-search__current">
+          <span>
+            Carrying <strong>{selected.brand} {selected.model}</strong>
+          </span>
+          <button type="button" className="link-button" onClick={() => onSelect(undefined)}>
+            Remove
+          </button>
+        </p>
+      )}
+    </div>
+  );
+}
 
 /**
  * Which bag the discs are carried in, from `GET /api/v1/bags`.
@@ -100,22 +244,7 @@ export function BagPicker({
       )}
 
       <div className="carry__controls">
-        <label className="field">
-          <span className="field__label">Your bag</span>
-          <select
-            className="field__control"
-            value={bagModelId ?? ''}
-            onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
-          >
-            <option value="">No bag selected</option>
-            {bags.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.brand} {b.model} — {capacityText(b)}
-                {b.emptyWeightPounds != null ? `, ${b.emptyWeightPounds} lb` : ''}
-              </option>
-            ))}
-          </select>
-        </label>
+        <BagSearch bags={bags} selected={selected} onSelect={onChange} />
       </div>
 
       {error && <p className="detail__error">{error}</p>}
