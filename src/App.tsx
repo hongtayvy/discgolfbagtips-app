@@ -149,6 +149,8 @@ export default function App() {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The disc just added from a result, so it can be undone from wherever the player is. */
+  const [justAdded, setJustAdded] = useState<{ discId: string; label: string } | null>(null);
   const [transfer, setTransfer] = useState<{ tone: 'ok' | 'error'; message: string } | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
@@ -161,8 +163,12 @@ export default function App() {
     [bag, result],
   );
 
-  /** Always appends: owning two of one mold, at different wear or plastic, is a real bag. */
-  const addDisc = (disc: Disc) => setBag((b) => (b.length >= MAX_BAG_SIZE ? b : [...b, newEntry(disc, b)]));
+  /**
+   * New discs go to the top, where the player is looking while they iterate, and
+   * repeats are allowed: owning two of one mold, at different wear or plastic,
+   * is a real bag.
+   */
+  const addDisc = (disc: Disc) => setBag((b) => (b.length >= MAX_BAG_SIZE ? b : [newEntry(disc, b), ...b]));
 
   const updateDisc = (id: string, patch: Partial<BagEntry>) =>
     setBag((b) => b.map((d) => (entryKey(d) === id ? { ...d, ...patch } : d)));
@@ -257,6 +263,12 @@ export default function App() {
     setBag(next);
     if (!next.length) setReport(null);
   };
+
+  useEffect(() => {
+    if (!justAdded) return;
+    const id = setTimeout(() => setJustAdded(null), 9000);
+    return () => clearTimeout(id);
+  }, [justAdded]);
 
   useEffect(() => {
     if (!transfer) return;
@@ -366,8 +378,16 @@ export default function App() {
    * catalog record rather than guessing at the fields the map and cards need.
    */
   const addFromRecommendation = async (discId: string) => {
+    if (bag.length >= MAX_BAG_SIZE) {
+      setTransfer({ tone: 'error', message: `A bag holds up to ${MAX_BAG_SIZE} discs. Remove one to add another.` });
+      return;
+    }
     try {
-      addDisc(await getDisc(discId));
+      const disc = await getDisc(discId);
+      addDisc(disc);
+      // The analysis re-runs on its own now that the bag changed, so the next
+      // gap appears without another click. This says so, and offers the way back.
+      setJustAdded({ discId, label: `${disc.brand} ${disc.name}` });
     } catch (err) {
       setTransfer({
         tone: 'error',
@@ -376,7 +396,19 @@ export default function App() {
     }
   };
 
+  /** Drops the most recently added copy of that disc, which is the topmost one. */
+  const undoAdd = () => {
+    if (!justAdded) return;
+    const { discId } = justAdded;
+    setBag((b) => {
+      const at = b.findIndex((d) => d.id === discId);
+      return at < 0 ? b : b.filter((_, i) => i !== at);
+    });
+    setJustAdded(null);
+  };
+
   const clearAll = () => {
+    setJustAdded(null);
     resetBag();
     setReport(null);
     setError(null);
@@ -655,6 +687,30 @@ export default function App() {
           </>
         )}
       </main>
+
+      {justAdded && (
+        <div className="toast" role="status">
+          <span>
+            Added <strong>{justAdded.label}</strong> to the top of your bag.{' '}
+            {loading ? 'Checking what is still missing…' : 'Your gaps are being updated.'}
+          </span>
+          <span className="toast__actions">
+            <button type="button" className="link-button" onClick={undoAdd}>
+              Undo
+            </button>
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setJustAdded(null);
+              }}
+            >
+              View bag
+            </button>
+          </span>
+        </div>
+      )}
 
       <footer className="app__footer">
         <p>
