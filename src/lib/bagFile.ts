@@ -92,15 +92,31 @@ export function bagFileName(date = new Date()): string {
   return `bag-tips-${date.toISOString().slice(0, 10)}.json`;
 }
 
+/**
+ * Typed as a generic binary download on purpose. Safari treats a blob served as
+ * `application/json` as something to display and opens it in a tab, ignoring the
+ * `download` attribute, which is what "downloads a different way" looked like.
+ * A binary type makes it a plain file download everywhere; the `.json` name is
+ * what tells the player (and the importer) what it is.
+ */
+export const BAG_DOWNLOAD_TYPE = 'application/octet-stream';
+
+/** Long enough that a slow browser has started reading the blob before it is released. */
+const REVOKE_AFTER_MS = 10_000;
+
 /** Hands the snapshot to the browser as a downloaded file. */
 export function downloadBag(snapshot: BagSnapshot): void {
-  const blob = new Blob([serializeBag(snapshot)], { type: 'application/json' });
+  const blob = new Blob([serializeBag(snapshot)], { type: BAG_DOWNLOAD_TYPE });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = bagFileName();
+  link.rel = 'noopener';
+  link.style.display = 'none';
   document.body.append(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  // Revoking straight away cancels the download in Safari, which resolves the
+  // blob after the click handler returns.
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);
 }
